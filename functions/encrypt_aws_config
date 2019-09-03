@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+
+func _enc_aws_cnf() {
+    cur_dir="$(pwd)"
+    cd ${__DD}/aws;
+    encrypt_sign config;
+    encrypt_sign credentials;
+    cd $cur_dir;
+}
+
+_enc_aws_cnf "$@"

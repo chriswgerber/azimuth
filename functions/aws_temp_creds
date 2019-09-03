@@ -1,0 +1,35 @@
+#!/usr/bin/env zsh
+##########################
+# Make AWS STS Credentials
+# $1 = aws profile
+# $2 = Role ARN (todo)
+
+_atc_profile() {
+  local prf
+  # Pass Profile
+  prf=$1
+  if [[ "$prf" != "" ]]; then echo $prf; fi
+  # ENV Profile "AWS_PROFILE"
+  if [[ "$AWS_PROFILE" != "" ]]; then echo $AWS_PROFILE; fi
+  # ENV Profile "AWS_DEFAULT_PROFILE"
+  if [[ "$AWS_DEFAULT_PROFILE" != "" ]]; then echo $AWS_DEFAULT_PROFILE; fi
+  # No profile
+  echo ""
+}
+
+_atc_main() {
+  local _TEMP_CRED_PROFILE _ARN
+
+  _TEMP_CRED_PROFILE="$(_atc_profile $1 | tr -d '[[:space:]]')"
+  if [[ "$_TEMP_CRED_PROFILE" == "" ]]; then
+    echo "\x1b[0;4;33m\n-----> Must define a profile. Either use awstempcreds <profile> or set AWS_PROFILE. \x1b[0m\n"
+    return 1
+  fi
+
+  _ARN=$(aws configure get role_arn --profile=$_TEMP_CRED_PROFILE)
+  echo "\x1b[0;4;33m\n-----> Getting temporary credentials for $_TEMP_CRED_PROFILE \x1b[0m\n"
+  aws sts assume-role --profile "$_TEMP_CRED_PROFILE" --role-arn "$_ARN" --role-session-name "cli-session" --output=text | tail -1 | awk '{print "\x1b[0;4;33mAccess ID:\x1b[0m     "$2 "\n\x1b[0;4;33mSecret Key:\x1b[0m    " $4 "\n\x1b[0;4;33mSession Token:\x1b[0m " $5}'
+  echo ""
+}
+
+_atc_main "$@"

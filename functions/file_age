@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+# Determine how old a file is.
+
+echo $(($(date +%s) - $(date -r "$1" +%s)))

@@ -1,0 +1,31 @@
+#!/usr/bin/env zsh
+
+# Track a process by PID and notify when complete
+local PID
+local PID_STATUS
+local NOTIFICATION
+local EXIT_CODE
+
+if [ -n "$1" ]; then
+  PID="$1"
+  if [ -n "$2" ];
+  then
+    NOTIFICATION="$2"
+  else
+    NOTIFICATION='notify'
+  fi
+
+  while [ -n "`ps -p $PID | grep $PID`" ];
+  do
+    sleep 0.5;
+  done;
+
+  send $NOTIFICATION
+  EXIT_CODE="0"
+else
+  echo 'Must provide PID to track.'
+  EXIT_CODE="1"
+fi
+
+# Exit
+return $EXIT_CODE;

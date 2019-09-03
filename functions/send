@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+# Send a message
+
+eval "send_$1 \"$2\" \"$3\"";

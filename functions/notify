@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+
+require 'docopt'
+
+doc = <<DOCOPT
+Notify
+
+Usage:
+  notify [options]
+
+Notification options:
+  -t, --title TEXT     Title of the notification [Default: Script].
+  -m, --message TEXT   Notification body  [Default: Completed].
+  -s, --subtitle TEXT  Notification Subtitle.
+  -n, --sound SOUND    Play sound when complete [Default: Submarine.aiff].
+
+Options:
+  -h --help         Show this screen.
+
+DOCOPT
+
+begin
+  OPT = Docopt.docopt(doc)
+rescue Docopt::Exit => e
+  puts e.message
+end
+
+cmd = []
+cmd.push "display notification \"#{OPT['--message']}\""
+cmd.push "with title \"#{OPT['--title']}\""
+cmd.push "subtitle \"#{OPT['--subtitle']}\"" unless OPT['--subtitle'].nil?
+cmd.push "sound name \"#{OPT['--sound']}\""
+
+# Run
+exec "/usr/bin/osascript -e '#{cmd.join(' ')}'"

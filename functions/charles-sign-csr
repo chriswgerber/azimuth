@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+# Sign CSR using Charles Proxy Cert
+
+local CHARLES_CA_CNF CRT_DOMAIN
+
+CHARLES_CA_CNF="$HOME/.config/openssl-ca/charles-ca.cnf"
+CRT_DOMAIN=$1
+
+if [[ -z "$CRT_DOMAIN" ]]; then
+  echo 'Must provide cert domain. [cert_domain].crt';
+  return 1
+fi
+
+openssl ca \
+  -config $CHARLES_CA_CNF \
+  -policy signing_policy \
+  -extensions signing_req \
+  -out $CRT_DOMAIN.crt \
+  -infiles $CRT_DOMAIN.csr

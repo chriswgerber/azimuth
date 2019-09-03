@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+
+__SLEEP=3
+
+function _find_yubikey() {
+  _yubikey="$(ioreg -p IOUSB -d3 -n "Yubikey 4 OTP+U2F+CCID" -r)"
+}
+
+# Setup
+_find_yubikey
+
+# Sleep until key is plugged in.
+while [ -z "$_yubikey" ]; do
+  _find_yubikey
+  sleep $__SLEEP;
+done
+
+echo $_yubikey > $HOME/.yubikey_data
+
+# Then sleep until it's removed again.
+while [ -n "$_yubikey" ]; do
+  _find_yubikey
+  sleep $__SLEEP;
+done
+
+# Sleeeep
+osascript -e 'tell application "System Events" to sleep'

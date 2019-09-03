@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+# Prune Images with <none>
+docker image list | \
+  awk '{if ($1 == "<none>"){ print $3 }}' | \
+  xargs -I{} docker image rm {}

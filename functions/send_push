@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+
+
+previous_result=$?
+
+PYTHON=$(command -v python3)
+if [ -n "$2" ]; then
+  SUBJECT=$2;
+  MSG=$1;
+elif [ -z "$2" ] && [ -n "$1" ]; then
+  SUBJECT=$1;
+  MSG="The script was completed on $(date +"%m/%d %r") on machine $USER@$HOST";
+else
+  if [ $previous_result -eq 0 ]; then m="Success"; else m="Failure"; fi
+  SUBJECT="$m: $USER@$HOST";
+  MSG="The script was completed on $(date +"%m/%d %r") on machine $USER@$HOST";
+fi
+
+export PUSHBULLET_LOG_FILE="$ZSH_CACHE_DIR/pushbullet_log.txt"
+
+$PYTHON $__DD/python/functions/pushbullet_send.py "$SUBJECT" "$MSG"
+
+return $previous_result

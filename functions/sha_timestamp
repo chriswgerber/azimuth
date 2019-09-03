@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+# Get the shasum of the current timestamp
+
+echo -n "$(date)" | shasum -a 256 - | cut -c 53- | awk '{print $1}'

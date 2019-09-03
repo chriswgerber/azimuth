@@ -1,0 +1,45 @@
+#!/usr/bin/env zsh
+
+set +x
+_SSH=$(command -v ssh)
+_IP_ADDR=$1
+
+if [[ -z "${SSH_KEY+x}" ]]; then
+  if [[ -n ${2+x} ]]; then
+    _ID=$2;
+  else
+    _ID="~/.ssh/dev/jenkins-7f7e97ffbed94f85";
+  fi
+else
+  _ID=$SSH_KEY
+fi
+
+_LOG_FILE="$_IP_ADDR-build-results.log"
+if [[ -n ${3+x} ]]; then
+  _LOG_FILE=$3;
+fi
+
+function ssh_command() {
+  __COMMAND=$1
+
+  if [ -z "$__COMMAND" ]; then
+    __COMMAND='echo "true" && exit;'
+  fi
+
+  $_SSH \
+    -o 'StrictHostKeyChecking=no' \
+    -o 'GlobalKnownHostsFile=/dev/null' \
+    -o 'UserKnownHostsFile=/dev/null' \
+    -o ConnectTimeout=3 \
+    -o ConnectionAttempts=1 \
+    -i $_ID \
+    ec2-user@$_IP_ADDR \
+    "$__COMMAND";
+}
+
+while [[ "" == "$(ssh_command 2>/dev/null)" ]]; do
+  echo "Waiting for $_IP_ADDR to become available."
+  sleep 3
+done
+
+ssh_command 'tail -f /var/log/*init*.log' | tee "$_LOG_FILE"

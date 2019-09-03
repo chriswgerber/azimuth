@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+##############################
+# Mark AWS Instance Unhealthy
+#
+# Set profile using `asp`.
+#
+# $1 = ID of instance
+
+ID="$1"
+
+aws autoscaling set-instance-health --instance-id $ID --health-status Unhealthy

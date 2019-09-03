@@ -1,0 +1,42 @@
+#!/usr/bin/env zsh
+
+# Args/Flag
+local sec_find_cmd
+# 1=[Service]
+local s_service
+# 2=[Account Name]
+local a_account
+# 3=[Comment]
+local j_comment
+# 4=[Label]
+local l_label
+
+sec_find_cmd=("$(command -v security)" "find-generic-password")
+
+if [ -n "$1" ]; then
+    s_service=$1
+    sec_find_cmd+=("-s")
+    sec_find_cmd+=($s_service)
+
+    if [ -n "$2" ]; then
+        a_account=$2
+        sec_find_cmd+=("-a")
+        sec_find_cmd+=($a_account)
+
+        if [ -n "$3" ]; then
+            j_comment=$3
+            sec_find_cmd+=("-j")
+            sec_find_cmd+=($j_comment)
+
+            if [ -n "$4" ]; then
+                l_label=$4
+                sec_find_cmd+=("-l")
+                sec_find_cmd+=($l_label)
+            fi
+        fi
+    fi
+fi
+
+sec_find_cmd+=("-w")
+
+eval "${sec_find_cmd[@]}"

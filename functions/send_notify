@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+previous_result=$?
+
+if [ -n "$2" ]; then
+  SUBJECT=$2;
+  MSG=$1;
+elif [ -z "$2" ] && [ -n "$1" ]; then
+  SUBJECT=$1;
+  MSG="...${PWD:(-15)} was completed at `date +"%m/%d %r"`";
+else
+  SUBJECT='Script Complete';
+  MSG="...${PWD:(-15)} was completed at `date +"%m/%d %r"`";
+fi
+
+# Run
+osascript -e "display notification \"$MSG\" with title \"$SUBJECT\" sound name \"Submarine.aiff\""
+
+return $previous_result

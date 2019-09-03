@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+# Decrypt file and verify signature
+local SRC_FILE DST_FILE
+
+if [ -z $1 ]; then
+    echo "You need to provide a source file."
+    echo "Usage: decrypt_sign SRC"
+    return 1
+else
+    SRC_FILE=$1
+fi
+
+DST_FILE="${SRC_FILE%.*}"
+
+gpg \
+    --output "$DST_FILE" \
+    --decrypt \
+    "$SRC_FILE"

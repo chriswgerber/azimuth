@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+##########################
+# Login to LastPass
+lpass login --trust --force $(<~/.lpass/username)

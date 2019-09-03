@@ -1,0 +1,28 @@
+#!/usr/bin/env zsh
+# Encrypt and Sign Target File for USER
+
+CWG_KEY="$DEFAULT_PGP_KEY"
+
+local SRC_FILE DST_USER;
+
+if [ -z "$2" ];
+then
+    if [ -z "$1" ];
+    then
+        echo "You need to provide a source file.";
+        echo "Usage: encrypt_sign [NAME] SRC";
+        return 1;
+    fi
+
+    SRC_FILE=$1;
+    DST_USER="$CWG_KEY"
+else
+  SRC_FILE=$2;
+  DST_USER=$1;
+fi
+
+gpg --encrypt --sign \
+  --default-recipient-self \
+  --local-user "$CWG_KEY" \
+  --output "$SRC_FILE.asc" \
+  $SRC_FILE

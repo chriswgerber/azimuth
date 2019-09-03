@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+#################
+# send_message
+#
+# Send message over iMessage
+
+if [[ "$?" -eq 0 ]]; then E_CODE="Success:"; else E_CODE="Fail:"; fi
+
+if [[ "$1" == "" ]]; then MSG="$E_CODE `date +"%m/%d %r"`"; else MSG="$E_CODE $1 - `date +"%m/%d %r"`"; fi
+
+PHONE_NUMBER='+16468010002'
+
+osascript $HOME/.zsh/functions/send_message.applescript $PHONE_NUMBER $MSG
