@@ -4,7 +4,7 @@
 function -profile-zsh-load() {
   # exposes zprofexport
     if [[ -z "$ZSH_DEBUG" ]]; then
-        echo 'Set $ZSH_DEBUG=true to enable profiling.'
+        echo 'Set $ZSH_DEBUG=1 to enable profiling.'
     else
         zmodload zsh/zprof
         time (
