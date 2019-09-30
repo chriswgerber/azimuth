@@ -67,27 +67,29 @@ function -dot-upgrade-brew() {
     # Upgrade Homebrew
     local _update_args _upgrade_args _dump_args
 
-    # Update
-    _update_args="--force"
-    if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
-    brew update $_update_args
+    { # Update
+      _update_args="--force"
+      if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
+      echo "brew update $_update_args"
+      brew update $_update_args
+    }
 
-    # Upgrade
-    _upgrade_args="--display-times"
-    if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
-    brew upgrade $_upgrade_args
+    { # Upgrade
+      _upgrade_args="--display-times"
+      if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
+      echo "brew upgrade $_upgrade_args"
+      brew upgrade $_upgrade_args
+    }
 
-    # Dump
-    _dump_args="--describe --force"
-    if [ -n "$BREW_FILE" ]; then _dump_args="${_dump_args} --file=$BREW_FILE"; fi
-    (
-      set -v;
+    ( # Dump
+      _dump_args="--describe --force"
+      if [ -n "$BREW_FILE" ]; then _dump_args="${_dump_args} --file=$BREW_FILE"; fi
+      echo "brew bundle dump $_dump_args"
       brew bundle dump $_dump_args
     ) &
 
-    # Cleanup
-    (
-      set -v;
+    ( # Cleanup
+      echo "brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS"
       brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS
     ) &
 
