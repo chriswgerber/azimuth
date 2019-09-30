@@ -65,29 +65,30 @@ function -dot-upgrade-omz() {
 
 function -dot-upgrade-brew() {
     # Upgrade Homebrew
-    local _upgrade_args _dump_args
+    local _update_args _upgrade_args _dump_args
 
-    # Update && upgrade
-    brew update --force
+    # Update
+    _update_args="--force"
+    if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
+    brew update $_update_args
 
+    # Upgrade
     _upgrade_args="--display-times"
     if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
-
-    echo "brew upgrade $_upgrade_args"
     brew upgrade $_upgrade_args
 
-    # Cleanup
+    # Dump
     _dump_args="--describe --force"
-    if [ -n "$BREW_FILE" ]; then _dump_args="--file=$BREW_FILE ${_dump_args}"; fi
-
-    (
-      set -v;
-      brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS
-    ) &
-
+    if [ -n "$BREW_FILE" ]; then _dump_args="${_dump_args} --file=$BREW_FILE"; fi
     (
       set -v;
       brew bundle dump $_dump_args
+    ) &
+
+    # Cleanup
+    (
+      set -v;
+      brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS
     ) &
 
     wait
