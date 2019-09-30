@@ -82,7 +82,7 @@ function -dot-upgrade-brew() {
     }
 
     ( # Dump
-      _dump_args="--describe --force"
+      _dump_args="--force --describe"
       if [ -n "$BREW_FILE" ]; then _dump_args="${_dump_args} --file=$BREW_FILE"; fi
       echo "brew bundle dump $_dump_args"
       brew bundle dump $_dump_args
