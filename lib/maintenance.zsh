@@ -81,12 +81,12 @@ function -dot-upgrade-brew() {
       brew upgrade $_upgrade_args
     }
 
-    ( # Dump
-      _dump_args="--force --describe"
-      if [ -n "$BREW_FILE" ]; then _dump_args="${_dump_args} --file=$BREW_FILE"; fi
-      echo "brew bundle dump $_dump_args"
-      brew bundle dump $_dump_args
-    ) &
+    if [ -n "$BREW_FILE" ]; then
+      ( # Dump
+        echo "brew bundle dump --force --describe --file=${BREW_FILE}"
+        brew bundle dump --force --describe --file=${BREW_FILE}
+      ) &
+    fi
 
     ( # Cleanup
       echo "brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS"
