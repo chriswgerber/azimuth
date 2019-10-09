@@ -2,21 +2,19 @@
 # AWS Login
 local _aws_profile _azure_user _azure_url
 
-_aws_profile=$1
-_azure_user=${2:$AZURE_DEFAULT_USERNAME}
-_azure_url=${AZURE_AD_URL:"https://microsoftonline.com/"}
+_azure_url="https://myapps.microsoftonline.com/"
+
+_aws_profile="$1"
+_azure_user="$2"
 
 (
-  if test -n "${AWS_PROFILE}" -a -z "${_aws_profile}"; then
-    _cmd_args="${AWS_PROFILE}";
-  fi
-
-  export AZURE_DEFAULT_PASSWORD="$(keychain_get_value "${_azure_url}" "${_azure_user}")"
+  export AZURE_DEFAULT_PASSWORD="$(keychain_get_value \
+    "${AZURE_AD_URL:=$_azure_url}" "${_azure_user:=$AZURE_DEFAULT_USERNAME}")"
 
   aws-azure-login \
     --enable-chrome-seamless-sso \
     --no-prompt \
-    --profile "${_aws_profile}"
+    --profile "${_aws_profile:=$AWS_PROFILE}"
 )
 
 export AZURE_DEFAULT_PASSWORD=""
