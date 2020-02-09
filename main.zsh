@@ -11,34 +11,38 @@ source "${_CUR_DIR}/lib/utils.zsh"
 
 
 function -dot-main() {
-    # Sources files in order of:
-    #
-    # - file.zsh
-    # - */file.zsh
-    # - post-file.zsh
+  # Sources files in order of:
+  #
+  # - file.zsh
+  # - */file.zsh
+  # - post-file.zsh
+  export __DD="${DOTFILES_DIR:=$HOME}"
 
-    export __DD="${DOTFILES_DIR:=$HOME}"
+  # Setup local fpath
+  # --------------------------------------
+  -dot-autoload-functions $__DD
+  -dot-autoload-completions $__DD
+  -reload-autoload
 
-    # Setup local fpath
-    # --------------------------------------
-    -reload-compinit "${_CUR_DIR}"
+  # Secrets
+  # --------------------------------------
+  -dot-source-dirglob "secrets.zsh"
+  -dot-source-dotfile "post-secrets.zsh"
 
-    # Secrets
-    # --------------------------------------
-    -dot-source-dirglob "secrets.zsh"
-    -dot-source-dotfile "post-secrets.zsh"
+  # Config
+  # --------------------------------------
+  -dot-source-dirglob "config.zsh"
+  -dot-source-dotfile "post-config.zsh"
 
-    # Config
-    # --------------------------------------
-    -dot-source-dirglob "config.zsh"
-    -dot-source-dotfile "post-config.zsh"
+  # Need to reload functions before init.
+  -reload-autoload
 
-    # Init
-    # --------------------------------------
-    -dot-source-dirglob "init.zsh"
-    -dot-source-dotfile "post-init.zsh"
+  # Init
+  # --------------------------------------
+  -dot-source-dirglob "init.zsh"
+  -dot-source-dotfile "post-init.zsh"
 
-    # Complete local fpath
-    # --------------------------------------
-    -reload-compinit "${_CUR_DIR}"
+  # Finish Autocomplete Setup
+  # --------------------------------------
+  -reload-compinit "${_CUR_DIR}"
 }
