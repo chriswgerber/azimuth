@@ -33,5 +33,5 @@ function -reload-autoload() {
 }
 
 function -dot-add-path() {
-  export "${1}:${PATH}"
+  export PATH="${1}:${PATH}"
 }

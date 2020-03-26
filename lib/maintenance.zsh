@@ -74,16 +74,16 @@ function -dot-upgrade-brew() {
     eval "${_cmd}"
   }
 
-  if [ -n "$BREW_FILE" ]; then
-    ( # Dump
-      echo "brew bundle dump --force --describe --file=${BREW_FILE}"
-      brew bundle dump --force --describe --file=${BREW_FILE}
-    ) &
-  fi
+  ( # Dump
+    if [ -n "$BREW_FILE" ]; then
+      _cmd="brew bundle dump --force --all --describe --file=${BREW_FILE}"
+      eval "${_cmd}"
+    fi
+  ) &
 
   ( # Cleanup
-    echo "brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS"
-    brew cleanup --verbose --prune=$BREW_CLEANUP_PRUNE_DAYS
+    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
+    eval "${_cmd}"
   ) &
 
   wait

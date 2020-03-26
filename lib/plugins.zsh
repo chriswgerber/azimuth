@@ -3,17 +3,16 @@
 
 function -dot-install-github-plugin() {
   # Install Github Plugin
-  local plugin_name=${1#*/}
-  local name=$1
+  local plugin_name=${1#*/} name=$1
   local URL="https://github.com/$name.git"
 
-  IFS='/' read -A parts <<<$1
   test -d "${ZSH_CUSTOM}/plugins" || mkdir -p "${ZSH_CUSTOM}/plugins"
+
+  IFS='/' read -A parts <<<$name
   if ! test -d "${ZSH_CUSTOM}/plugins/${parts[2]}"; then
-      cd ${ZSH_CUSTOM}/plugins
-      git clone $URL
-    fi
-    plugins=($plugins $plugin_name)
+    ( cd ${ZSH_CUSTOM}/plugins && git clone $URL )
+  fi
+  plugins=($plugins $plugin_name)
 }
 
 
