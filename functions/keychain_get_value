@@ -12,6 +12,7 @@ local j_comment=${3=}
 local l_label=${4=}
 
 sec_find_cmd=("$(command -v security)" "find-generic-password" "-w")
+
 if test ${s_service}; then
     sec_find_cmd+=("-s")
     sec_find_cmd+=(${s_service})
@@ -37,10 +38,12 @@ _sec=$(eval "${sec_find_cmd[@]}" 2>&1)
 if test $? -eq 0; then
   print "${_sec}";
 else
-  (printf 'Unable to get keychain value for (service:%s|account:%s|comment:%s|label:%s);\n%s' \
-    ${s_service} \
-    ${a_account} \
-    ${j_comment} \
-    ${l_label} \
-    "${_sec}" ) >&2
+  (
+    printf 'Unable to get keychain value for ( service:%s | account:%s | comment:%s | label:%s );' \
+      ${s_service} \
+      ${a_account} \
+      ${j_comment} \
+      ${l_label};
+    echo "\n${_sec}";
+  ) >&2
 fi
