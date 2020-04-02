@@ -32,7 +32,7 @@ if test ${l_label}; then
   sec_find_cmd+=(${l_label})
 fi
 
-_sec="$(eval "${sec_find_cmd[@]}")"
+_sec="${!sec_find_cmd[@]}"
 _sec_return=$?
 
 if test ${_sec_return} -eq 0; then
