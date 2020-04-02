@@ -33,13 +33,13 @@ if test ${l_label}; then
 fi
 
 _sec_cmd=""
-_sec=$(eval "${sec_find_cmd[@]}")
+_sec=$(eval "${sec_find_cmd[@]}" 2>&1)
 _sec_return=$?
 
 if test ${_sec_return} -eq 0; then
   print "${_sec}";
 else
-  printf "Unable to get keychain value for %s:%s:%s:%s;\n%s" \
+  printf "Unable to get keychain value for %s||%s||%s||%s;\n%s" \
     ${s_service} \
     ${a_account} \
     ${j_comment} \
