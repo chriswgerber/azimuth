@@ -1,7 +1,7 @@
-#!/usr/bin/env zsh
+#!/bin/zsh
 
 # Args/Flag
-local sec_find_cmd _sec _sec_return
+local sec_find_cmd _sec_cmd _sec _sec_return
 # 1=[Service]
 local s_service=${1}
 # 2=[Account Name]
@@ -32,7 +32,8 @@ if test ${l_label}; then
   sec_find_cmd+=(${l_label})
 fi
 
-_sec="${!sec_find_cmd[@]}"
+_sec_cmd="${sec_find_cmd[@]}"
+_sec=${!_sec_cmd}
 _sec_return=$?
 
 if test ${_sec_return} -eq 0; then
