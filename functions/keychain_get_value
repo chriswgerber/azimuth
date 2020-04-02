@@ -32,8 +32,8 @@ if test ${l_label}; then
   sec_find_cmd+=(${l_label})
 fi
 
-_sec_cmd="${sec_find_cmd[@]}"
-_sec=${!_sec_cmd}
+_sec_cmd=""
+_sec=$(eval "${sec_find_cmd[@]}")
 _sec_return=$?
 
 if test ${_sec_return} -eq 0; then
