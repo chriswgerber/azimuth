@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 # Args/Flag
-local sec_find_cmd _sec_cmd _sec _sec_return
+local sec_find_cmd _sec
 # 1=[Service]
 local s_service=${1}
 # 2=[Account Name]
@@ -32,19 +32,15 @@ if test ${l_label}; then
   sec_find_cmd+=(${l_label})
 fi
 
-_sec_cmd=""
 _sec=$(eval "${sec_find_cmd[@]}" 2>&1)
-_sec_return=$?
 
-if test ${_sec_return} -eq 0; then
+if test $? -eq 0; then
   print "${_sec}";
 else
-  printf "Unable to get keychain value for %s||%s||%s||%s;\n%s" \
+  printf 'Unable to get keychain value for (service:%s|account:%s|comment:%s|label:%s);\n%s' \
     ${s_service} \
     ${a_account} \
     ${j_comment} \
     ${l_label} \
-    "$_sec"
+    "${_sec}"
 fi
-
-return ${_sec_return};
