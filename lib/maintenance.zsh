@@ -69,7 +69,7 @@ function -dot-upgrade-shell-env() {
 }
 
 
-alias -upgrade-shell-env="-dot-upgrade-shell-env"
+alias -- -upgrade-shell-env="-dot-upgrade-shell-env"
 
 
 function -dot-upgrade-cache-repos() {
