@@ -44,6 +44,6 @@ else
       ${a_account} \
       ${j_comment} \
       ${l_label};
-    echo "\n${_sec}";
+    echo "\n\t${_sec}";
   ) >&2
 fi
