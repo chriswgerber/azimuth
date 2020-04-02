@@ -1,42 +1,43 @@
 #!/usr/bin/env zsh
 
 # Args/Flag
+local sec_find_cmd _sec
 # 1=[Service]
+local s_service=${1}
 # 2=[Account Name]
+local a_account=${2}
 # 3=[Comment]
+local j_comment=${3=}
 # 4=[Label]
-local sec_find_cmd
-local s_service
-local a_account
-local j_comment
-local l_label
+local l_label=${4=}
 
-sec_find_cmd=("$(command -v security)" "add-generic-password")
+sec_find_cmd=("$(command -v security)" "add-generic-password" "-w")
 
-if [ -n "$1" ]; then
-    s_service=$1
+if test ${s_service}; then
     sec_find_cmd+=("-s")
-    sec_find_cmd+=($s_service)
-
-    if [ -n "$2" ]; then
-        a_account=$2
-        sec_find_cmd+=("-a")
-        sec_find_cmd+=($a_account)
-
-        if [ -n "$3" ]; then
-            j_comment=$3
-            sec_find_cmd+=("-j")
-            sec_find_cmd+=($j_comment)
-
-            if [ -n "$4" ]; then
-                l_label=$4
-                sec_find_cmd+=("-l")
-                sec_find_cmd+=($l_label)
-            fi
-        fi
-    fi
+    sec_find_cmd+=(${s_service})
 fi
 
-sec_find_cmd+=("-w")
+if test ${a_account}; then
+  sec_find_cmd+=("-a")
+  sec_find_cmd+=(${a_account})
+fi
+
+if test ${j_comment}; then
+  sec_find_cmd+=("-j")
+  sec_find_cmd+=(${j_comment})
+fi
+
+if test ${l_label}; then
+  sec_find_cmd+=("-l")
+  sec_find_cmd+=(${l_label})
+fi
+
+printf 'Setting Keychain value ( service:%s | account:%s | comment:%s | label:%s ) - ' \
+  ${s_service} \
+  ${a_account} \
+  ${j_comment} \
+  ${l_label};
+print "\n"
 
 eval "${sec_find_cmd[@]}"
