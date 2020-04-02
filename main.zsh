@@ -6,7 +6,6 @@ _CUR_DIR=$(dirname "$0")
 
 source "${_CUR_DIR}/lib/files.zsh"
 source "${_CUR_DIR}/lib/maintenance.zsh"
-source "${_CUR_DIR}/lib/plugins.zsh"
 source "${_CUR_DIR}/lib/utils.zsh"
 
 

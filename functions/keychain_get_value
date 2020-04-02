@@ -35,7 +35,7 @@ fi
 _sec="$(eval "${sec_find_cmd[@]}")"
 _sec_return=$?
 
-if test ${_sec_return} -eq 0;
+if test ${_sec_return} -eq 0; then
   print "${_sec}";
 else
   printf "Unable to get keychain value for %s:%s:%s:%s;\n%s" \
