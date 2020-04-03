@@ -73,7 +73,7 @@ function -dot-autoload-completions() {
 
 function -dot-add-symlink-to-home() {
   # Creates symlink in the $HOME directory
-  local _src="$__DD/$1" _dest="$HOME/$2"
+  local _src="$__DD/$1" _dest="$HOME/${2#"$HOME/"}"
 
   if ! test -L $_dest; then
     if ! test -e $_dest; then

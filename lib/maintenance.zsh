@@ -89,10 +89,12 @@ function -dot-upgrade-zsh-plugins() {
 
 function -dot-upgrade-dir-repos() {
   # Update plugins from Github
-  local _target_dir=$1
+  local _target_dir=$1 _remote_url
 
   for i in $(find ${_target_dir} -type d -depth 1); do
     (
+      printf "=> Upgrading directory %s from origin %s.\n" \
+        $i "$(git -C $i config remote.origin.url)"
       set -v
       git -C $i pull origin master
     ) &
