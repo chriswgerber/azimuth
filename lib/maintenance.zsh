@@ -75,27 +75,26 @@ alias -- -upgrade-shell-env="-dot-upgrade-shell-env"
 function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
   local __cachedir="${ZSH_CACHE_DIR:=$__DD/.cache}"
-  local __basedir="$(dirname $__cachedir)"
 
-  for i in $(ls ${__cachedir}); do
-    (
-      set -v
-      git -C ${__basedir}/$i pull origin master
-    ) &
-  done
-
-  wait
+  -dot-upgrade-dir-repos "${__cachedir}"
 }
 
 
 function -dot-upgrade-zsh-plugins() {
-  # Update plugins from Github
-  local _plugins_dir="${ZSH_CUSTOM}/plugins"
+  # Update plugins for ZSH
 
-  for i in $(ls ${_plugins_dir}/); do
+  -dot-upgrade-dir-repos "${ZSH_CUSTOM}/plugins"
+}
+
+
+function -dot-upgrade-dir-repos() {
+  # Update plugins from Github
+  local _target_dir=$1
+
+  for i in $(find ${_target_dir}/ -type d -depth 1); do
     (
       set -v
-      git -C ${_plugins_dir}/$i pull origin master
+      git -C ${_target_dir}/$i pull origin master
     ) &
   done
 
