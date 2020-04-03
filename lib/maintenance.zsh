@@ -94,7 +94,7 @@ function -dot-upgrade-dir-repos() {
   for i in $(find ${_target_dir} -type d -depth 1); do
     (
       set -v
-      git -C ${_target_dir}/$i pull origin master
+      git -C $i pull origin master
     ) &
   done
 
