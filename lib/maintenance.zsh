@@ -34,7 +34,7 @@ function -dot-install-omz() {
   # Installs OMZ into the ZSH directory
   -dot-install-github-repo \
     "robbyrussell/oh-my-zsh" \
-    "${ZSH}:=${ZSH_CACHE_DIR}/oh-my-zsh"
+    "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
 }
 
 
@@ -91,7 +91,7 @@ function -dot-upgrade-dir-repos() {
   # Update plugins from Github
   local _target_dir=$1
 
-  for i in $(find ${_target_dir}/ -type d -depth 1); do
+  for i in $(find ${_target_dir} -type d -depth 1); do
     (
       set -v
       git -C ${_target_dir}/$i pull origin master
