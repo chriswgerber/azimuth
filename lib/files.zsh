@@ -22,9 +22,9 @@ function -dot-source-dotfile() {
   # Source a file in the dotfile dir.
   # If it doesn't find the matching file in the dotfile directory, it will
   # source it from the current working directory.
-  if [ -e "${__DD}/$1" ]; then
+  if test -r "${__DD}/$1"; then
     source "${__DD}/$1";
-  elif [ -e "${1}" ]; then
+  elif test -r "${1}"; then
     source "${1}";
   fi
 }
@@ -37,7 +37,7 @@ function -dot-source-dirglob() {
 
   -dot-source-dotfile "${_target_file}"
 
-  for the_file in $(ls $__DD/*/$_target_file); do
+  for the_file in $($SHELL +o nomatch -c "ls ${__DD}/*/${_target_file} 2>/dev/null"); do
     -dot-source-dotfile $the_file;
   done
 }
