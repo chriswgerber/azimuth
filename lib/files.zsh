@@ -1,9 +1,22 @@
 #!/bin/zsh
 
 
-function -dot-cache-source-file() {
+function -dot-cache-get-file() {
   # Source a file from the cache.
   local fh="${ZSH_CACHE_DIR}/$1"
+
+  if ! test -e "${fh}"; then
+    mkdir -p "$(dirname ${fh})"
+    touch "${fh}"
+  fi
+
+  echo "${fh}"
+}
+
+
+function -dot-cache-source-file() {
+  # Source a file from the cache.
+  local fh=$(-dot-cache-get-file $1)
 
   test -e "${fh}" && source "${fh}"
 }
@@ -12,7 +25,8 @@ function -dot-cache-source-file() {
 function -dot-cache-update-file() {
   # Update a file in the cache directory by overwriting the contents with the
   # output of the passed command.
-  local fh="${ZSH_CACHE_DIR}/$1" cmmd="$2"
+  local fh=$(-dot-cache-get-file $1) cmmd="$2"
+
   echo "Updating cached file ${fh}"
   (eval "${cmmd}")&> "${fh}"
 }
