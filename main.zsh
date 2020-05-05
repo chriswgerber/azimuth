@@ -10,18 +10,20 @@ source "${_CUR_DIR}/lib/utils.zsh"
 
 
 function -dot-main() {
+  # Load the framework.
+  # 
   # Sources files in order of:
-  #
-  # - file.zsh
-  # - */file.zsh
-  # - post-file.zsh
+  #   - file.zsh
+  #   - */file.zsh
+  #   - post-file.zsh
+
   export __DD="${DOTFILES_DIR:=$HOME}"
 
   # Setup local fpath
   # --------------------------------------
   -dot-autoload-functions $__DD
   -dot-autoload-completions $__DD
-  -reload-autoload
+  -dot-reload-autoload
 
   # Secrets
   # --------------------------------------
@@ -34,7 +36,8 @@ function -dot-main() {
   -dot-source-dotfile "post-config.zsh"
 
   # Need to reload functions before init.
-  -reload-autoload
+  # --------------------------------------
+  -dot-reload-autoload
 
   # Init
   # --------------------------------------
@@ -43,5 +46,5 @@ function -dot-main() {
 
   # Finish Autocomplete Setup
   # --------------------------------------
-  -reload-compinit "${_CUR_DIR}"
+  -dot-reload-compinit
 }
