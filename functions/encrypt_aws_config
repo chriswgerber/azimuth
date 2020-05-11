@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/bin/zsh
 
 func _enc_aws_cnf() {
     cur_dir="$(pwd)"

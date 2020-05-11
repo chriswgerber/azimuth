@@ -52,8 +52,8 @@ function -dot-install-github-plugin() {
 
 function -dot-install-omz() {
   # Installs OMZ into the ZSH directory
-  # Usage: 
-  # 
+  # Usage:
+  #
 
   -dot-install-github-repo \
     "robbyrussell/oh-my-zsh" \
@@ -70,14 +70,14 @@ function -dot-upgrade-dir-repos() {
   local _remote_url _found
   local _target_dir=$1 _ignore_dirs=(${2})
 
-  if test ${#__ignore_dirs[@]} -eq 0; then 
+  if test ${#__ignore_dirs[@]} -eq 0; then
     _found=($(find "${_target_dir}" -maxdepth 1 -type d \
       -not -path "${_target_dir}" \
       -not \( \
         -name "${_ignore_dirs[1]}" \
         $(printf -- '-o -name "%s" ' "${_ignore_dirs[2,-1]}") \
       \)))
-  else 
+  else
     _found=($(find "${_target_dir}" -maxdepth 1 -type d \
       -not -path "${_target_dir}" \
       ));
@@ -89,7 +89,7 @@ function -dot-upgrade-dir-repos() {
         $i \
         "$(git -C $i config remote.origin.url)" \
         $i
-        
+
       git -C $i pull origin master
     ) &
   done
@@ -100,16 +100,18 @@ function -dot-upgrade-dir-repos() {
 
 function -dot-upgrade-dotfiles-dir() {
   # Update the dotfiles directory, caching the contents while updating.
-  # Usage : 
-  #
+  # Usage :
+  #  $1 = Dotfiles Repo Directory
+
+  local repo_dir=${1:=${DOTFILES_DIR}}
 
   (
     set -v
-    git -C $__DD stash
-    git -C $__DD pull --ff-only origin master || true
+    git -C "${repo_dir}" stash
+    git -C "${repo_dir}" pull --ff-only origin master || true
   )
 
-  (git -C $__DD stash pop || true) &>/dev/null
+  (git -C "${repo_dir}" stash pop || true) &>/dev/null
 
   -dot-main
 }
@@ -117,7 +119,7 @@ function -dot-upgrade-dotfiles-dir() {
 
 function -dot-upgrade-brew() {
   # Upgrade Homebrew
-  # Usage : 
+  # Usage :
 
   local _update_args _upgrade_args _dump_args _cmd
 
@@ -140,12 +142,14 @@ function -dot-upgrade-brew() {
   { # Dump installed brews to file.
     if [ -n "$BREW_FILE" ]; then
       _cmd="brew bundle dump --force --all --describe --file=${BREW_FILE}"
+      echo "${_cmd}"
       eval "${_cmd}"
     fi
   }
 
   { # Cleanup cached brews
     _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
+    echo "${_cmd}"
     eval "${_cmd}"
   }
 }
@@ -155,7 +159,7 @@ function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
   # Usage :
 
-  local __cachedir="${ZSH_CACHE_DIR:=$__DD/.cache}"
+  local __cachedir="${ZSH_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
 
   -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
@@ -164,7 +168,7 @@ function -dot-upgrade-cache-repos() {
 
 function -dot-upgrade-zsh-plugins() {
   # Update plugins for ZSH
-  # Usage : 
+  # Usage :
 
   -dot-upgrade-dir-repos "${ZSH_CUSTOM}/plugins"
 }
@@ -172,9 +176,9 @@ function -dot-upgrade-zsh-plugins() {
 
 function -dot-upgrade-dotfiles-projects() {
   # Run upgrade.zsh across project
-  # Usage : 
+  # Usage :
 
-  for i in $(ls -d $__DD/*/upgrade.zsh); do
+  for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
     (
       set -v
       source "${i}"
@@ -188,10 +192,10 @@ function -dot-upgrade-dotfiles-projects() {
 function -dot-upgrade-shell-env() {
   # Upgrade the Dotfiles environment
   # Runs all the upgrade functions against the environment.
-  # Usage : 
-  
+  # Usage :
+
   # Upgrade the dotfiles repo.
-  -dot-upgrade-dotfiles-dir
+  -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
 
   # We have to run the brew upgrade first since everything is installed by it.
   -dot-upgrade-brew
