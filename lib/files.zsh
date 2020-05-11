@@ -44,10 +44,10 @@ function -dot-add-symlink-to-home() {
 
   if ! test -L $_dest; then
     if ! test -e $_dest; then
-      printf "Creating link for file $% at %s\n" "$_src" "$_dest"
+      printf "Creating link for file %s at %s\n" "$_src" "$_dest"
 
       if test -e "$_src"; then
-        printf "Creating target directory $%\n" $_dest
+        printf "Creating target directory %s\n" $_dest
 
         mkdir -p $(dirname "$_dest")
         ln -sf "$_src" "$_dest"
