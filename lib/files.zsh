@@ -40,7 +40,7 @@ function -dot-add-symlink-to-home() {
   #   $1 = Source file to use as link.
   #   $2 = Destination for symlink.
 
-  local _src="${1}" _dest="$HOME/${2#"$HOME/"}"
+  local _src="$DOTFILES_DIR/${1#"$DOTFILES_DIR/"}" _dest="$HOME/${2#"$HOME/"}"
 
   if ! test -L $_dest; then
     if ! test -e $_dest; then
