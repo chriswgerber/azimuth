@@ -52,15 +52,17 @@ function -dot-add-symlink-to-home() {
         mkdir -p $(dirname "$_dest")
         ln -sf "$_src" "$_dest"
         return 0
+      else
+        printf \
+          "Unable to create symlink for %s; src file %s does not exist.\n" \
+          $_dest \
+          $_src
       fi
+    else
       printf \
-        "Unable to create symlink for %s; src file %s does not exist.\n" \
-        $_dest \
-        $_src
+        "Unable to create symlink for %s; dest file %s already exists.\n" \
+        $_src \
+        $_dest
     fi
-    printf \
-      "Unable to create symlink for %s; dest file %s already exists.\n" \
-      $_src \
-      $_dest
   fi
 }
