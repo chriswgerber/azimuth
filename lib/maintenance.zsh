@@ -61,6 +61,43 @@ function -dot-install-omz() {
 }
 
 
+function -dot-install-brew-bundle() {
+  # Installs all of the packages in a Homebrew Brewfile.
+  # Usage:
+  #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
+  #
+
+  local _brewfile=${1:=${BREW_FILE}} _brew=$(command -v brew)
+
+  test -n ${_brew} ||
+    { echo 'HomeBrew not found; "brew" command not available' && return 1 }
+  test -r ${_brewfile} ||
+    { echo 'Unable to find or read Brewfile.' && return 1 }
+
+  printf 'Installing brew packages from %s\n' "${_brewfile}"
+  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile}
+
+  ${_brew} bundle install --file "${_brewfile}" --verbose
+}
+
+
+function -dot-dump-brew-bundle() {
+  # Dump brew packages to file.
+  # Usage:
+  #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
+  #
+
+  local _brewfile=${1:=${BREW_FILE}} _brew=$(command -v brew)
+
+  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
+
+  printf 'Installing brew packages from %s\n' "${_brewfile}"
+  printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
+
+  ${_brew} bundle dump --file "${_brewfile}" --force --all
+}
+
+
 function -dot-upgrade-dir-repos() {
   # Update plugins from Github
   # Usage:
@@ -141,9 +178,7 @@ function -dot-upgrade-brew() {
 
   { # Dump installed brews to file.
     if [ -n "$BREW_FILE" ]; then
-      _cmd="brew bundle dump --force --all --describe --file=${BREW_FILE}"
-      echo "${_cmd}"
-      eval "${_cmd}"
+      -dot-dump-brew-bundle
     fi
   }
 
