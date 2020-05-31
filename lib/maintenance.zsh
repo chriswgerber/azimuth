@@ -241,5 +241,5 @@ function -dot-upgrade-shell-env() {
   -dot-upgrade-dotfiles-projects
 
   # Lastly, reload the shell
-  eval "${SHELL}"
+  exec "${SHELL}"
 }
