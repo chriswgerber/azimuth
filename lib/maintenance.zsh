@@ -243,3 +243,24 @@ function -dot-upgrade-shell-env() {
   # Lastly, reload the shell
   exec "${SHELL}"
 }
+
+
+function -dot-upgrade-completion() {
+  # Upgrade a completion file.
+  # Usage :
+  #   1 = Name of the command
+  #   2 = Path of completions directory
+  #
+
+  local \
+    commd="${1}" \
+    dir="${2}"
+
+  command -v ${commd} || return 1
+
+  {
+    mkdir -p "${dir}" || true
+
+    ${commd} completion zsh &> "${dir}/_${commd}"
+  }
+}
