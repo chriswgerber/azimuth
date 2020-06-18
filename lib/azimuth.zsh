@@ -19,6 +19,12 @@ function -dot-main() {
 
   # Load Framework functions
   # --------------------------------------
+  # Zcompile functions if needed.
+  if ! test -f functions.zwc; then
+    command -v zcompile || autoload -Uz zcompile
+    zcompile -Uz functions.zwc $(find ${_CUR_DIR}/functions -type f -print0 | tr "\0" " ")
+  fi
+
   -dot-add-fpath "${_CUR_DIR}" "functions"
   -dot-add-fpath "${src_dir}" "functions"
   -dot-add-fpath "${_CUR_DIR}" "completions"

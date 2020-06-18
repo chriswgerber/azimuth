@@ -255,12 +255,13 @@ function -dot-upgrade-completion() {
   local \
     commd="${1}" \
     dir="${2}"
+    subcommd="${3:=completion}"
 
   command -v ${commd} || return 1
 
   {
     mkdir -p "${dir}" || true
 
-    ${commd} completion zsh &> "${dir}/_${commd}"
+    ${commd} ${subcommd} zsh &> "${dir}/_${commd}"
   }
 }

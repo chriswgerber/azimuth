@@ -42,12 +42,12 @@ function -dot-add-symlink-to-home() {
 
   local _src="$DOTFILES_DIR/${1#"$DOTFILES_DIR/"}" _dest="$HOME/${2#"$HOME/"}"
 
-  if ! test -L $_dest; then
-    if ! test -e $_dest; then
+  if ! test -L "$_dest"; then
+    if ! test -e "$_dest"; then
       printf "Creating link for file %s at %s\n" "$_src" "$_dest"
 
       if test -e "$_src"; then
-        printf "Creating target directory %s\n" $_dest
+        printf "Creating target directory %s\n" "$_dest"
 
         mkdir -p $(dirname "$_dest")
         ln -sf "$_src" "$_dest"
@@ -55,14 +55,14 @@ function -dot-add-symlink-to-home() {
       else
         printf \
           "Unable to create symlink for %s; src file %s does not exist.\n" \
-          $_dest \
-          $_src
+          "$_dest" \
+          "$_src"
       fi
     else
       printf \
         "Unable to create symlink for %s; dest file %s already exists.\n" \
-        $_src \
-        $_dest
+        "$_src" \
+        "$_dest"
     fi
   fi
 }

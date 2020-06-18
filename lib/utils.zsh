@@ -31,7 +31,7 @@ function -dot-reload-compinit() {
 
 
 function -dot-reload-autoload() {
-  # Reload the functions added to autoload.
+  # Reload the functions added to fpath.
 
   for func in $^fpath/*(N-.x:t); do
     autoload -Uz $func
