@@ -19,23 +19,10 @@ function -dot-main() {
 
   # Load Framework functions
   # --------------------------------------
-  # Zcompile functions if needed.
-  if ! test -f functions.zwc; then
-    command -v zcompile || autoload -Uz zcompile
-    zcompile -Uz functions.zwc $(find ${_CUR_DIR}/functions -type f -print0 | tr "\0" " ")
-  fi
+  fpath=(${_CUR_DIR}/main.zsh.zwc $fpath)
 
-  -dot-add-fpath "${_CUR_DIR}" "functions"
-  -dot-add-fpath "${src_dir}" "functions"
-  -dot-add-fpath "${_CUR_DIR}" "completions"
-  -dot-add-fpath "${src_dir}" "completions"
-  # Reload
-  -dot-reload-autoload
-
-  # Secrets
-  # --------------------------------------
-  -dot-source-dirglob "secrets.zsh"
-  -dot-source-dotfile "post-secrets.zsh"
+  -dot-add-fpath "${_CUR_DIR}/functions"
+  -dot-add-fpath "${_CUR_DIR}/completions"
 
   # Config
   # --------------------------------------

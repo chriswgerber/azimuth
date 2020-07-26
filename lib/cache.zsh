@@ -7,7 +7,7 @@ function -dot-cache-get-file() {
   #  $1 = Name of the file to read from the cache. Will create the file if it
   #       doesn't exist.
 
-  local fh="${ZSH_CACHE_DIR}/$1"
+  local fh="${DOT_CACHE_DIR}/$1"
 
   if ! test -e "${fh}"; then
     mkdir -p "$(dirname ${fh})"

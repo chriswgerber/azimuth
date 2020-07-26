@@ -30,23 +30,10 @@ function -dot-main() {
 
   # Load Framework functions
   # --------------------------------------
-  # Zcompile functions if needed.
-  if ! test -f functions.zwc; then
-    command -v zcompile || autoload -Uz zcompile
-    zcompile -Uz functions.zwc $(find ${_CUR_DIR}/functions -type f -print0 | tr "\0" " ")
-  fi
+  fpath=(${_CUR_DIR}/main.zsh.zwc $fpath)
 
-  -dot-add-fpath "${_CUR_DIR}" "functions"
-  -dot-add-fpath "${src_dir}" "functions"
-  -dot-add-fpath "${_CUR_DIR}" "completions"
-  -dot-add-fpath "${src_dir}" "completions"
-  # Reload
-  -dot-reload-autoload
-
-  # Secrets
-  # --------------------------------------
-  -dot-source-dirglob "secrets.zsh"
-  -dot-source-dotfile "post-secrets.zsh"
+  -dot-add-fpath "${_CUR_DIR}/functions"
+  -dot-add-fpath "${_CUR_DIR}/completions"
 
   # Config
   # --------------------------------------
@@ -70,7 +57,7 @@ function -dot-cache-get-file() {
   #  $1 = Name of the file to read from the cache. Will create the file if it
   #       doesn't exist.
 
-  local fh="${ZSH_CACHE_DIR}/$1"
+  local fh="${DOT_CACHE_DIR}/$1"
 
   if ! test -e "${fh}"; then
     mkdir -p "$(dirname ${fh})"
@@ -174,63 +161,77 @@ function -dot-add-symlink-to-home() {
 }
 
 
-function -dot-install-github-repo() {
-  # Idempotently clone repo from GitHub into directory.
-  # Usage:
-  # $1 (required) = Namespace/ProjectName
-  # $2 (required) = Filesystem Location
-  # $3            = Protocol (SSH|HTTPS)
-
-  local __test __url __dir=$2 __protocol="${GIT_PROTOCOL:=ssh}"
-
-  if ! test -d $__dir; then mkdir -p $__dir; fi
-
-  __test=$(git -C $__dir remote -v &>/dev/null)
-
-  if test $? -ne 0 -o ! -d "${__dir}/.git"; then
-    if test "$3"; then __protocol="$3"; fi;
-
-    case $__protocol in
-      https|HTTPS) # Use HTTPS
-        __url="https://github.com/$1.git"
-        ;;
-      ssh|SSH|*)   # Default
-        __url="git@github.com:$1.git"
-        ;;
-    esac;
-
-    rm -r ${__dir} || true;
-
-    git clone --depth 10 $__url $__dir;
-  fi
-}
-
-
-function -dot-install-github-plugin() {
-  # Install Github Plugin
-  # Usage:
-  # $1 = Group + Plugin Name
-  # $2 = Install Directory
-
-  local name=$1 plugin_name=${1#*/} __dir="${2:=${ZSH_CUSTOM}/plugins}"
-
-  -dot-install-github-repo \
-    "$name" \
-    "${__dir}/${plugin_name}" \
-    "HTTPS";
-
-  plugins=($plugins $plugin_name)
-}
-
-
-function -dot-install-omz() {
-  # Installs OMZ into the ZSH directory
-  # Usage:
+function -dot-add-fpath() {
+  # Add the directory, and any 1st level directories, to the fpath.
   #
+  # Usage:
+  #   1 - Directory to begin search. azimuth/functions azimuth/completions
+  #   2 - Name of directory to load within the base directory
 
-  -dot-install-github-repo \
-    "robbyrussell/oh-my-zsh" \
-    "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
+  local fpath_dir="${1}" fncPath
+
+  if ! test -d ${fpath_dir}; then
+    return
+  fi
+
+  fncPath="$(-dot-cache-fnc-dir "${fpath_dir}")"
+
+  export fpath=(${fncPath} $fpath)
+
+  for fnc in $(find ${fpath_dir} \( -type f -o -type l \) -print0 | tr "\0" " "); do
+    autoload -Uz $fnc
+  done
+}
+
+
+function -dot-cache-fnc-dir() {
+  # Cache the contents of a zsh `functions` directory.
+  #
+  # Usage :
+  #   $1 = Target Directory
+  #   $2 = Optional file name of the compiled functions.
+
+  local zwc target_dir="${1}" suffix=".zwc"
+
+  if ! test -d ${target_dir}; then
+    return
+  fi
+
+  zwc="${target_dir}${suffix}"
+
+  if [[ "$(find ${target_dir} \( -type f -o -type l \) -print0)" == "" ]]; then
+    printf "%s" ${target_dir}
+    return
+  fi
+
+  if ! test -f ${zwc}; then
+    rm -f ${zwc}
+    touch ${zwc}
+    (
+      set -v
+      zcompile -Uz ${zwc} $(find ${target_dir} \( -type f -o -type l \) -print0 | tr "\0" " ")
+    )
+  fi
+
+  printf "%s" ${zwc}
+}
+
+
+function -dot-cache-fnc-clear() {
+  # Delete all compiled ZSH functions.
+  #
+  # Usage :
+  #   $1 = Target Directory to search
+
+  local target_dir="${1:=${DOTFILES_DIR}}" suffix=".zwc" del_compdump="true"
+
+  for fncfile in $(find "$target_dir" -type f -name "*${suffix}" -print); do
+    rm -f "${fncfile}" || true
+  done
+
+  if [[ "${del_compdump}" == "true" ]] ; then
+    rm -f "${ZSH_COMPDUMP}" || true
+  fi
 }
 
 
@@ -367,7 +368,7 @@ function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
   # Usage :
 
-  local __cachedir="${ZSH_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
+  local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
 
   -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
@@ -408,9 +409,10 @@ function -dot-upgrade-shell-env() {
   # We have to run the brew upgrade first since everything is installed by it.
   -dot-upgrade-brew
 
+  upgrade_oh_my_zsh
+
   # The Rest
   -dot-upgrade-cache-repos
-  -dot-upgrade-zsh-plugins
   -dot-upgrade-dotfiles-projects
 
   # Lastly, reload the shell
@@ -440,6 +442,75 @@ function -dot-upgrade-completion() {
 }
 
 
+function -dot-install-github-repo() {
+  # Idempotently clone repo from GitHub into directory.
+  # Usage:
+  # $1 (required) = Namespace/ProjectName
+  # $2 (required) = Filesystem Location
+  # $3            = Protocol (SSH|HTTPS)
+
+  local __test __url __dir=$2 __protocol="${GIT_PROTOCOL:=ssh}"
+
+  if ! test -d $__dir; then mkdir -p $__dir; fi
+
+  __test=$(git -C $__dir remote -v &>/dev/null)
+
+  if test $? -ne 0 -o ! -d "${__dir}/.git"; then
+    if test "$3"; then __protocol="$3"; fi;
+
+    case $__protocol in
+      https|HTTPS) # Use HTTPS
+        __url="https://github.com/$1.git"
+        ;;
+      ssh|SSH|*)   # Default
+        __url="git@github.com:$1.git"
+        ;;
+    esac;
+
+    rm -r ${__dir} || true;
+
+    git clone --depth 10 $__url $__dir;
+  fi
+}
+
+
+function -dot-install-github-plugin() {
+  # Install Github Plugin
+  # Usage:
+  # $1 = Group + Plugin Name
+  # $2 = Install Directory
+
+  local name=$1 plugin_name=${1#*/} __dir="${2:=${ZSH_CUSTOM}/plugins}"
+
+  -dot-install-github-repo \
+    "$name" \
+    "${__dir}/${plugin_name}" \
+    "HTTPS";
+
+  plugins=($plugins $plugin_name)
+}
+
+
+function -dot-install-omz() {
+  # Installs OMZ into the ZSH directory
+  # Usage:
+  #
+
+  -dot-install-github-repo \
+    "robbyrussell/oh-my-zsh" \
+    "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
+}
+
+
+function -dot-add-path() {
+  # A stupid function that adds a new Path to the beginning of the PATH.
+  # Usage:
+  # $1 = Path string.
+
+  export PATH="${1}:${PATH}"
+}
+
+
 function -dot-profile-zsh() {
   # Run a cprof-like load of the ZSH Environment
   # Usage :
@@ -459,8 +530,9 @@ function -dot-reload-compinit() {
   # Reload/Setup Autoload functions and compinit
   # Usage :
 
-  autoload -Uz +X compinit
-  autoload -Uz +X bashcompinit
+  autoload -U compinit
+  # autoload -Uz +X compdef
+  autoload -U +X bashcompinit
 
   # Autoload fpath and bash completes compat, as well
   -dot-reload-autoload
@@ -471,38 +543,9 @@ function -dot-reload-compinit() {
 
 function -dot-reload-autoload() {
   # Reload the functions added to fpath.
+  local subarray
 
   for func in $^fpath/*(N-.x:t); do
     autoload -Uz $func
-  done
-}
-
-
-function -dot-add-path() {
-  # A stupid function that adds a new Path to the beginning of the PATH.
-  # Usage:
-  # $1 = Path string.
-
-  export PATH="${1}:${PATH}"
-}
-
-
-function -dot-add-fpath() {
-  # Add the directory, and any 1st level directories, to the fpath.
-  #
-  # Usage:
-  #   1 - Directory to begin search.
-  #   2 - Name of directory to load within the base directory
-
-  local _src_dir="$1" _fn="${2}"
-
-  if test -d "${_src_dir}/${_fn}"; then
-    fpath=(${_src_dir}/${_fn} $fpath)
-  fi
-
-  for fdir in $(find "$_src_dir" -type d -maxdepth 1 -not -name "*.*" -print); do
-    if test -d "${fdir}/${_fn}"; then
-      fpath=($fdir/${_fn} $fpath)
-    fi
   done
 }
