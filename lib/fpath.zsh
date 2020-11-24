@@ -8,13 +8,16 @@ function -dot-add-fpath() {
   #   1 - Directory to begin search. azimuth/functions azimuth/completions
   #   2 - Name of directory to load within the base directory
 
-  local fpath_dir="${1}" fncPath
+  local fpath_dir="${1}" fncPath skipZwc="${2:="not"}"
 
   if ! test -d ${fpath_dir}; then
     return
   fi
-
-  fncPath="$(-dot-cache-fnc-dir "${fpath_dir}")"
+  if test "${skipZwc}" != "not"; then
+    fncPath="${fpath_dir}"
+  else
+    fncPath="$(-dot-cache-fnc-dir "${fpath_dir}")"
+  fi
 
   export fpath=(${fncPath} $fpath)
 

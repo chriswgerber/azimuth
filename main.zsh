@@ -168,13 +168,16 @@ function -dot-add-fpath() {
   #   1 - Directory to begin search. azimuth/functions azimuth/completions
   #   2 - Name of directory to load within the base directory
 
-  local fpath_dir="${1}" fncPath
+  local fpath_dir="${1}" fncPath skipZwc="${2:="not"}"
 
   if ! test -d ${fpath_dir}; then
     return
   fi
-
-  fncPath="$(-dot-cache-fnc-dir "${fpath_dir}")"
+  if test "${skipZwc}" != "not"; then
+    fncPath="${fpath_dir}"
+  else
+    fncPath="$(-dot-cache-fnc-dir "${fpath_dir}")"
+  fi
 
   export fpath=(${fncPath} $fpath)
 
@@ -370,7 +373,7 @@ function -dot-upgrade-cache-repos() {
 
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
-
+  echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
   -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
 }
 
@@ -403,16 +406,20 @@ function -dot-upgrade-shell-env() {
   # Runs all the upgrade functions against the environment.
   # Usage :
 
-  # Upgrade the dotfiles repo.
+  echo "Updating dotfiles dir"
   -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
 
   # We have to run the brew upgrade first since everything is installed by it.
+  echo "Updating brew"
   -dot-upgrade-brew
 
+  echo "Updating omz"
   upgrade_oh_my_zsh
 
-  # The Rest
+  echo "Updating cache repos"
   -dot-upgrade-cache-repos
+
+  echo "Updating dotfiles directories"
   -dot-upgrade-dotfiles-projects
 
   # Lastly, reload the shell

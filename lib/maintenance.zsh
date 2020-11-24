@@ -136,7 +136,7 @@ function -dot-upgrade-cache-repos() {
 
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
-
+  echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
   -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
 }
 
@@ -169,16 +169,20 @@ function -dot-upgrade-shell-env() {
   # Runs all the upgrade functions against the environment.
   # Usage :
 
-  # Upgrade the dotfiles repo.
+  echo "Updating dotfiles dir"
   -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
 
   # We have to run the brew upgrade first since everything is installed by it.
+  echo "Updating brew"
   -dot-upgrade-brew
 
+  echo "Updating omz"
   upgrade_oh_my_zsh
 
-  # The Rest
+  echo "Updating cache repos"
   -dot-upgrade-cache-repos
+
+  echo "Updating dotfiles directories"
   -dot-upgrade-dotfiles-projects
 
   # Lastly, reload the shell
