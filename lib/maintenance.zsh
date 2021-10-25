@@ -96,7 +96,7 @@ function -dot-upgrade-dotfiles-dir() {
 
   (git -C "${repo_dir}" stash pop || true) &>/dev/null
 
-  -dot-main
+  -dot-main "${repo_dir}"
 }
 
 
@@ -180,16 +180,9 @@ function -dot-upgrade-shell-env() {
   -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
 
   # We have to run the brew upgrade first since everything is installed by it.
-  echo "Updating brew"
   -dot-upgrade-brew
-
-  echo "Updating omz"
-  upgrade_oh_my_zsh
-
-  echo "Updating cache repos"
+  omz update
   -dot-upgrade-cache-repos
-
-  echo "Updating dotfiles directories"
   -dot-upgrade-dotfiles-projects
 
   # Lastly, reload the shell
