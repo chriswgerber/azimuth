@@ -3,11 +3,12 @@
 
 function -dot-install-brew-bundle() {
   # Installs all of the packages in a Homebrew Brewfile.
+  #
   # Usage:
   #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
-  #
 
-  local _brewfile=${1:=${BREW_FILE}} _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}}
+  local _brew=$(command -v brew)
 
   test -n ${_brew} ||
     { echo 'HomeBrew not found; "brew" command not available' && return 1 }
@@ -23,11 +24,12 @@ function -dot-install-brew-bundle() {
 
 function -dot-dump-brew-bundle() {
   # Dump brew packages to file.
+  #
   # Usage:
   #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
-  #
 
-  local _brewfile=${1:=${BREW_FILE}} _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}}
+  local _brew=$(command -v brew)
 
   test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
 
@@ -40,12 +42,15 @@ function -dot-dump-brew-bundle() {
 
 function -dot-upgrade-dir-repos() {
   # Update plugins from Github
+  #
   # Usage:
-  # $1 = Directory to check for repos.
-  # $2 = Array of directory names to ignore
+  #   $1 = Directory to check for repos.
+  #   $2 = Array of directory names to ignore
 
-  local _remote_url _found
-  local _target_dir=$1 _ignore_dirs=(${2})
+  local _remote_url
+  local _found
+  local _target_dir=$1
+  local _ignore_dirs=(${2})
 
   if test ${#__ignore_dirs[@]} -eq 0; then
     _found=($(find "${_target_dir}" -maxdepth 1 -type d \
@@ -77,8 +82,9 @@ function -dot-upgrade-dir-repos() {
 
 function -dot-upgrade-dotfiles-dir() {
   # Update the dotfiles directory, caching the contents while updating.
+  #
   # Usage :
-  #  $1 = Dotfiles Repo Directory
+  #   $1 = Dotfiles Repo Directory
 
   local repo_dir=${1:=${DOTFILES_DIR}}
 
@@ -95,10 +101,12 @@ function -dot-upgrade-dotfiles-dir() {
 
 
 function -dot-upgrade-brew() {
-  # Upgrade Homebrew
-  # Usage :
+  # Run brew update, upgrade, and cleanup
 
-  local _update_args _upgrade_args _dump_args _cmd
+  local _update_args
+  local _upgrade_args
+  local _dump_args
+  local _cmd
 
   { # Update brew
     _update_args="--force"
@@ -132,26 +140,25 @@ function -dot-upgrade-brew() {
 
 function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
-  # Usage :
 
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
+
   echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
+
   -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
 }
 
 
 function -dot-upgrade-zsh-plugins() {
-  # Update plugins for ZSH
-  # Usage :
+  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
 
   -dot-upgrade-dir-repos "${ZSH_CUSTOM}/plugins"
 }
 
 
 function -dot-upgrade-dotfiles-projects() {
-  # Run upgrade.zsh across project
-  # Usage :
+  # Run upgrade.zsh across all directories in dotfiles dir
 
   for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
     (
@@ -166,8 +173,8 @@ function -dot-upgrade-dotfiles-projects() {
 
 function -dot-upgrade-shell-env() {
   # Upgrade the Dotfiles environment
+  #
   # Runs all the upgrade functions against the environment.
-  # Usage :
 
   echo "Updating dotfiles dir"
   -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
@@ -192,21 +199,29 @@ function -dot-upgrade-shell-env() {
 
 function -dot-upgrade-completion() {
   # Upgrade a completion file.
+  #
   # Usage :
   #   1 = Name of the command
   #   2 = Path of completions directory
-  #
 
-  local \
-    commd="${1}" \
-    dir="${2}"
-    subcommd="${3:=completion}"
+  local commd="${1}"
+  local arggs=( "${@[2,-2]}" )
+  local dirr="${@[-1]}"
 
-  command -v ${commd} || return 1
+  command -v ${commd} || { printf "command not found: %s. Skipping\n" "${commd}" && return 1 }
 
   {
     mkdir -p "${dir}" || true
 
-    ${commd} ${subcommd} zsh &> "${dir}/_${commd}"
+    printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
+      "${commd}" \
+      "${arggs}" \
+      "${dirr}/"
+
+    set -x
+
+    "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
+
+    set +x
   }
 }

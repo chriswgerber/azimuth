@@ -3,12 +3,15 @@
 
 function -dot-source-dotfile() {
   # Source a file in the dotfile dir.
+  #
   # If it doesn't find the matching file in the dotfile directory, it will
   # source it from the current working directory.
+  #
   # Usage :
   #   $1 = The name of the file to find in the dotfiles directory.
 
-  local fh="${1}" base_dir="${2:=${DOTFILES_DIR}}"
+  local fh="${1}"
+  local base_dir="${2:=${DOTFILES_DIR}}"
 
   if test -r "${base_dir}/${fh}"; then
     source "${base_dir}/${fh}";
@@ -21,10 +24,12 @@ function -dot-source-dotfile() {
 function -dot-source-dirglob() {
   # Sources all files matching argument, beginning with the root file and then
   # source all in 1st level subdirectory.
+  #
   # Usage :
   #   $1 = The name of the file to find across directories.
 
-  local _target_file=$1 base_dir=${2:=$DOTFILES_DIR}
+  local _target_file=$1
+  local base_dir=${2:=$DOTFILES_DIR}
 
   -dot-source-dotfile "${_target_file}"
 
@@ -36,22 +41,26 @@ function -dot-source-dirglob() {
 
 function -dot-add-symlink-to-home() {
   # Creates symlink in the $HOME directory
+  #
   # Usage :
   #   $1 = Source file to use as link.
   #   $2 = Destination for symlink.
 
-  local _src="$DOTFILES_DIR/${1#"$DOTFILES_DIR/"}" _dest="$HOME/${2#"$HOME/"}"
+  local _src="$DOTFILES_DIR/${1#"$DOTFILES_DIR/"}"
+  local _dest="$HOME/${2#"$HOME/"}"
+  local _dest_dir
 
   if ! test -L "$_dest"; then
     if ! test -e "$_dest"; then
+      _dest_dir="$(dirname "$_dest")"
       printf "Creating link for file %s at %s\n" "$_src" "$_dest"
 
       if test -e "$_src"; then
-        printf "Creating target directory %s\n" "$_dest"
+        printf "Creating target directory %s\n" "$_dest_dir"
 
-        mkdir -p $(dirname "$_dest")
+        mkdir -p "$_dest_dir"
         ln -sf "$_src" "$_dest"
-        return 0
+        return
       else
         printf \
           "Unable to create symlink for %s; src file %s does not exist.\n" \

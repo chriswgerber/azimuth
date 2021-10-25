@@ -3,14 +3,21 @@
 
 function -dot-install-github-repo() {
   # Idempotently clone repo from GitHub into directory.
+  #
   # Usage:
-  # $1 (required) = Namespace/ProjectName
-  # $2 (required) = Filesystem Location
-  # $3            = Protocol (SSH|HTTPS)
+  #   $1 (required) = Namespace/ProjectName
+  #   $2 (required) = Filesystem Location
+  #   $3            = Protocol (SSH|HTTPS)
 
-  local __test __url __dir=$2 __protocol="${GIT_PROTOCOL:=ssh}"
+  local __test
+  local __url
+  local __repo="${1}"
+  local __dir="${2}"
+  local __protocol="${GIT_PROTOCOL:=ssh}"
 
-  if ! test -d $__dir; then mkdir -p $__dir; fi
+  if ! test -d $__dir; then
+    mkdir -p $__dir;
+  fi
 
   __test=$(git -C $__dir remote -v &>/dev/null)
 
@@ -19,10 +26,10 @@ function -dot-install-github-repo() {
 
     case $__protocol in
       https|HTTPS) # Use HTTPS
-        __url="https://github.com/$1.git"
+        __url="https://github.com/${__repo}.git"
         ;;
       ssh|SSH|*)   # Default
-        __url="git@github.com:$1.git"
+        __url="git@github.com:${__repo}.git"
         ;;
     esac;
 
@@ -35,11 +42,14 @@ function -dot-install-github-repo() {
 
 function -dot-install-github-plugin() {
   # Install Github Plugin
+  #
   # Usage:
-  # $1 = Group + Plugin Name
-  # $2 = Install Directory
+  #   $1 = Group + Plugin Name
+  #   $2 = Install Directory
 
-  local name=$1 plugin_name=${1#*/} __dir="${2:=${ZSH_CUSTOM}/plugins}"
+  local name="${1}"
+  local __dir="${2:=${ZSH_CUSTOM}/plugins}"
+  local plugin_name="${name#*/}"
 
   -dot-install-github-repo \
     "$name" \
@@ -52,8 +62,6 @@ function -dot-install-github-plugin() {
 
 function -dot-install-omz() {
   # Installs OMZ into the ZSH directory
-  # Usage:
-  #
 
   -dot-install-github-repo \
     "robbyrussell/oh-my-zsh" \

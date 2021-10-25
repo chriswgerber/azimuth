@@ -14,9 +14,9 @@ _CUR_DIR=$(dirname "$0")
 
 function -dot-main() {
   # Load the framework. Sources files in order of:
-  #  - file.zsh
-  #  - */file.zsh
-  #  - post-file.zsh
+  #   - file.zsh
+  #   - */file.zsh
+  #   - post-file.zsh
   #
   # Args:
   #  $1 - Directory location of the Dotfiles.
@@ -50,12 +50,50 @@ function -dot-main() {
   -dot-reload-compinit
 }
 
+function -dot-help() {
+  # Print all -dot commands
+  #
+  # Usage:
+  #   1 (optional) = Command to print help for
+
+  local _cmd="${1}"
+  local _cmds="$(compgen -c | sort | grep -E '^\-dot')"
+  local _src_file="$(whence -v - -dot-help | awk '{print $7}')"
+
+  if test -n "${_cmd}"; then
+    echo ''
+    cmdArray=( "${_cmd}" )
+  else
+    echo 'Available Commands:\n'
+    cmdArray=( $(echo "$_cmds") )
+  fi
+
+  for _name in "${cmdArray[@]}"; do
+    echo "${_name}()\n"
+
+    awk \
+      -v fncname="${_name}" \
+      '$0 ~ fncname {
+        getline;
+        while ( $0 ~ /#/ ) {
+          gsub(/#/, "");
+          print "    " $0;
+          getline;
+        }
+      }' \
+      "${_src_file}"
+
+    echo ""
+  done;
+}
+
 
 function -dot-cache-get-file() {
   # Create or get the name of a file in the cache directory.
+  #
   # Usage :
-  #  $1 = Name of the file to read from the cache. Will create the file if it
-  #       doesn't exist.
+  #   $1 = Name of the file to read from the cache. Will create the file if it
+  #        doesn't exist.
 
   local fh="${DOT_CACHE_DIR}/$1"
 
@@ -70,6 +108,7 @@ function -dot-cache-get-file() {
 
 function -dot-cache-source-file() {
   # Source a file from the cache.
+  #
   # Usage :
   #   $1 = File name from cache directory.
 
@@ -82,6 +121,7 @@ function -dot-cache-source-file() {
 function -dot-cache-update-file() {
   # Update a file in the cache directory by overwriting the contents with the
   # output of the passed command.
+  #
   # Usage :
   #   $1 = The name of the file to be updated.
   #   $2 = The command to be run to update the file.
@@ -96,12 +136,15 @@ function -dot-cache-update-file() {
 
 function -dot-source-dotfile() {
   # Source a file in the dotfile dir.
+  #
   # If it doesn't find the matching file in the dotfile directory, it will
   # source it from the current working directory.
+  #
   # Usage :
   #   $1 = The name of the file to find in the dotfiles directory.
 
-  local fh="${1}" base_dir="${2:=${DOTFILES_DIR}}"
+  local fh="${1}"
+  local base_dir="${2:=${DOTFILES_DIR}}"
 
   if test -r "${base_dir}/${fh}"; then
     source "${base_dir}/${fh}";
@@ -114,10 +157,12 @@ function -dot-source-dotfile() {
 function -dot-source-dirglob() {
   # Sources all files matching argument, beginning with the root file and then
   # source all in 1st level subdirectory.
+  #
   # Usage :
   #   $1 = The name of the file to find across directories.
 
-  local _target_file=$1 base_dir=${2:=$DOTFILES_DIR}
+  local _target_file=$1
+  local base_dir=${2:=$DOTFILES_DIR}
 
   -dot-source-dotfile "${_target_file}"
 
@@ -129,22 +174,26 @@ function -dot-source-dirglob() {
 
 function -dot-add-symlink-to-home() {
   # Creates symlink in the $HOME directory
+  #
   # Usage :
   #   $1 = Source file to use as link.
   #   $2 = Destination for symlink.
 
-  local _src="$DOTFILES_DIR/${1#"$DOTFILES_DIR/"}" _dest="$HOME/${2#"$HOME/"}"
+  local _src="$DOTFILES_DIR/${1#"$DOTFILES_DIR/"}"
+  local _dest="$HOME/${2#"$HOME/"}"
+  local _dest_dir
 
   if ! test -L "$_dest"; then
     if ! test -e "$_dest"; then
+      _dest_dir="$(dirname "$_dest")"
       printf "Creating link for file %s at %s\n" "$_src" "$_dest"
 
       if test -e "$_src"; then
-        printf "Creating target directory %s\n" "$_dest"
+        printf "Creating target directory %s\n" "$_dest_dir"
 
-        mkdir -p $(dirname "$_dest")
+        mkdir -p "$_dest_dir"
         ln -sf "$_src" "$_dest"
-        return 0
+        return
       else
         printf \
           "Unable to create symlink for %s; src file %s does not exist.\n" \
@@ -168,7 +217,9 @@ function -dot-add-fpath() {
   #   1 - Directory to begin search. azimuth/functions azimuth/completions
   #   2 - Name of directory to load within the base directory
 
-  local fpath_dir="${1}" fncPath skipZwc="${2:="not"}"
+  local fpath_dir="${1}"
+  local skipZwc="${2:="not"}"
+  local fncPath
 
   if ! test -d ${fpath_dir}; then
     return
@@ -194,7 +245,9 @@ function -dot-cache-fnc-dir() {
   #   $1 = Target Directory
   #   $2 = Optional file name of the compiled functions.
 
-  local zwc target_dir="${1}" suffix=".zwc"
+  local target_dir="${1}"
+  local suffix=".zwc"
+  local zwc
 
   if ! test -d ${target_dir}; then
     return
@@ -226,7 +279,9 @@ function -dot-cache-fnc-clear() {
   # Usage :
   #   $1 = Target Directory to search
 
-  local target_dir="${1:=${DOTFILES_DIR}}" suffix=".zwc" del_compdump="true"
+  local target_dir="${1:=${DOTFILES_DIR}}"
+  local suffix=".zwc"
+  local del_compdump="true"
 
   for fncfile in $(find "$target_dir" -type f -name "*${suffix}" -print); do
     rm -f "${fncfile}" || true
@@ -240,11 +295,12 @@ function -dot-cache-fnc-clear() {
 
 function -dot-install-brew-bundle() {
   # Installs all of the packages in a Homebrew Brewfile.
+  #
   # Usage:
   #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
-  #
 
-  local _brewfile=${1:=${BREW_FILE}} _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}}
+  local _brew=$(command -v brew)
 
   test -n ${_brew} ||
     { echo 'HomeBrew not found; "brew" command not available' && return 1 }
@@ -260,11 +316,12 @@ function -dot-install-brew-bundle() {
 
 function -dot-dump-brew-bundle() {
   # Dump brew packages to file.
+  #
   # Usage:
   #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
-  #
 
-  local _brewfile=${1:=${BREW_FILE}} _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}}
+  local _brew=$(command -v brew)
 
   test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
 
@@ -277,12 +334,15 @@ function -dot-dump-brew-bundle() {
 
 function -dot-upgrade-dir-repos() {
   # Update plugins from Github
+  #
   # Usage:
-  # $1 = Directory to check for repos.
-  # $2 = Array of directory names to ignore
+  #   $1 = Directory to check for repos.
+  #   $2 = Array of directory names to ignore
 
-  local _remote_url _found
-  local _target_dir=$1 _ignore_dirs=(${2})
+  local _remote_url
+  local _found
+  local _target_dir=$1
+  local _ignore_dirs=(${2})
 
   if test ${#__ignore_dirs[@]} -eq 0; then
     _found=($(find "${_target_dir}" -maxdepth 1 -type d \
@@ -314,8 +374,9 @@ function -dot-upgrade-dir-repos() {
 
 function -dot-upgrade-dotfiles-dir() {
   # Update the dotfiles directory, caching the contents while updating.
+  #
   # Usage :
-  #  $1 = Dotfiles Repo Directory
+  #   $1 = Dotfiles Repo Directory
 
   local repo_dir=${1:=${DOTFILES_DIR}}
 
@@ -332,10 +393,12 @@ function -dot-upgrade-dotfiles-dir() {
 
 
 function -dot-upgrade-brew() {
-  # Upgrade Homebrew
-  # Usage :
+  # Run brew update, upgrade, and cleanup
 
-  local _update_args _upgrade_args _dump_args _cmd
+  local _update_args
+  local _upgrade_args
+  local _dump_args
+  local _cmd
 
   { # Update brew
     _update_args="--force"
@@ -369,26 +432,25 @@ function -dot-upgrade-brew() {
 
 function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
-  # Usage :
 
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
+
   echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
+
   -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
 }
 
 
 function -dot-upgrade-zsh-plugins() {
-  # Update plugins for ZSH
-  # Usage :
+  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
 
   -dot-upgrade-dir-repos "${ZSH_CUSTOM}/plugins"
 }
 
 
 function -dot-upgrade-dotfiles-projects() {
-  # Run upgrade.zsh across project
-  # Usage :
+  # Run upgrade.zsh across all directories in dotfiles dir
 
   for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
     (
@@ -403,8 +465,8 @@ function -dot-upgrade-dotfiles-projects() {
 
 function -dot-upgrade-shell-env() {
   # Upgrade the Dotfiles environment
+  #
   # Runs all the upgrade functions against the environment.
-  # Usage :
 
   echo "Updating dotfiles dir"
   -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
@@ -429,36 +491,51 @@ function -dot-upgrade-shell-env() {
 
 function -dot-upgrade-completion() {
   # Upgrade a completion file.
+  #
   # Usage :
   #   1 = Name of the command
   #   2 = Path of completions directory
-  #
 
-  local \
-    commd="${1}" \
-    dir="${2}"
-    subcommd="${3:=completion}"
+  local commd="${1}"
+  local arggs=( "${@[2,-2]}" )
+  local dirr="${@[-1]}"
 
-  command -v ${commd} || return 1
+  command -v ${commd} || { printf "command not found: %s. Skipping\n" "${commd}" && return 1 }
 
   {
     mkdir -p "${dir}" || true
 
-    ${commd} ${subcommd} zsh &> "${dir}/_${commd}"
+    printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
+      "${commd}" \
+      "${arggs}" \
+      "${dirr}/"
+
+    set -x
+
+    "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
+
+    set +x
   }
 }
 
 
 function -dot-install-github-repo() {
   # Idempotently clone repo from GitHub into directory.
+  #
   # Usage:
-  # $1 (required) = Namespace/ProjectName
-  # $2 (required) = Filesystem Location
-  # $3            = Protocol (SSH|HTTPS)
+  #   $1 (required) = Namespace/ProjectName
+  #   $2 (required) = Filesystem Location
+  #   $3            = Protocol (SSH|HTTPS)
 
-  local __test __url __dir=$2 __protocol="${GIT_PROTOCOL:=ssh}"
+  local __test
+  local __url
+  local __repo="${1}"
+  local __dir="${2}"
+  local __protocol="${GIT_PROTOCOL:=ssh}"
 
-  if ! test -d $__dir; then mkdir -p $__dir; fi
+  if ! test -d $__dir; then
+    mkdir -p $__dir;
+  fi
 
   __test=$(git -C $__dir remote -v &>/dev/null)
 
@@ -467,10 +544,10 @@ function -dot-install-github-repo() {
 
     case $__protocol in
       https|HTTPS) # Use HTTPS
-        __url="https://github.com/$1.git"
+        __url="https://github.com/${__repo}.git"
         ;;
       ssh|SSH|*)   # Default
-        __url="git@github.com:$1.git"
+        __url="git@github.com:${__repo}.git"
         ;;
     esac;
 
@@ -483,11 +560,14 @@ function -dot-install-github-repo() {
 
 function -dot-install-github-plugin() {
   # Install Github Plugin
+  #
   # Usage:
-  # $1 = Group + Plugin Name
-  # $2 = Install Directory
+  #   $1 = Group + Plugin Name
+  #   $2 = Install Directory
 
-  local name=$1 plugin_name=${1#*/} __dir="${2:=${ZSH_CUSTOM}/plugins}"
+  local name="${1}"
+  local __dir="${2:=${ZSH_CUSTOM}/plugins}"
+  local plugin_name="${name#*/}"
 
   -dot-install-github-repo \
     "$name" \
@@ -500,8 +580,6 @@ function -dot-install-github-plugin() {
 
 function -dot-install-omz() {
   # Installs OMZ into the ZSH directory
-  # Usage:
-  #
 
   -dot-install-github-repo \
     "robbyrussell/oh-my-zsh" \
@@ -511,8 +589,9 @@ function -dot-install-omz() {
 
 function -dot-add-path() {
   # A stupid function that adds a new Path to the beginning of the PATH.
+  #
   # Usage:
-  # $1 = Path string.
+  #   $1 = Path string.
 
   export PATH="${1}:${PATH}"
 }
@@ -520,7 +599,6 @@ function -dot-add-path() {
 
 function -dot-profile-zsh() {
   # Run a cprof-like load of the ZSH Environment
-  # Usage :
 
   # exposes zprofexport
   if [[ -z "$ZSH_DEBUG" ]]; then
@@ -535,7 +613,6 @@ function -dot-profile-zsh() {
 
 function -dot-reload-compinit() {
   # Reload/Setup Autoload functions and compinit
-  # Usage :
 
   autoload -U compinit
   # autoload -Uz +X compdef
@@ -550,6 +627,7 @@ function -dot-reload-compinit() {
 
 function -dot-reload-autoload() {
   # Reload the functions added to fpath.
+
   local subarray
 
   for func in $^fpath/*(N-.x:t); do

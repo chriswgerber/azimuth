@@ -3,9 +3,9 @@
 
 function -dot-main() {
   # Load the framework. Sources files in order of:
-  #  - file.zsh
-  #  - */file.zsh
-  #  - post-file.zsh
+  #   - file.zsh
+  #   - */file.zsh
+  #   - post-file.zsh
   #
   # Args:
   #  $1 - Directory location of the Dotfiles.
@@ -37,4 +37,41 @@ function -dot-main() {
   # Finish Autocomplete Setup
   # --------------------------------------
   -dot-reload-compinit
+}
+
+function -dot-help() {
+  # Print all -dot commands
+  #
+  # Usage:
+  #   1 (optional) = Command to print help for
+
+  local _cmd="${1}"
+  local _cmds="$(compgen -c | sort | grep -E '^\-dot')"
+  local _src_file="$(whence -v - -dot-help | awk '{print $7}')"
+
+  if test -n "${_cmd}"; then
+    echo ''
+    cmdArray=( "${_cmd}" )
+  else
+    echo 'Available Commands:\n'
+    cmdArray=( $(echo "$_cmds") )
+  fi
+
+  for _name in "${cmdArray[@]}"; do
+    echo "${_name}()\n"
+
+    awk \
+      -v fncname="${_name}" \
+      '$0 ~ fncname {
+        getline;
+        while ( $0 ~ /#/ ) {
+          gsub(/#/, "");
+          print "    " $0;
+          getline;
+        }
+      }' \
+      "${_src_file}"
+
+    echo ""
+  done;
 }
