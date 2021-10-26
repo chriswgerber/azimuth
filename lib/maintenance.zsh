@@ -49,15 +49,17 @@ function -dot-upgrade-dir-repos() {
 
   local _remote_url
   local _found
+  local bname
   local _target_dir=$1
-  local _ignore_dirs=(${2})
+  shift
+  local -a _ignore_dirs=(${@})
 
-  if test ${#__ignore_dirs[@]} -eq 0; then
+  if test ${#_ignore_dirs[@]} -ne 0; then
     _found=($(find "${_target_dir}" -maxdepth 1 -type d \
       -not -path "${_target_dir}" \
       -not \( \
         -name "${_ignore_dirs[1]}" \
-        $(printf -- '-o -name "%s" ' "${_ignore_dirs[2,-1]}") \
+        $(printf -- '-o -name %s ' ${_ignore_dirs[2,-1]}) \
       \)))
   else
     _found=($(find "${_target_dir}" -maxdepth 1 -type d \
@@ -67,9 +69,15 @@ function -dot-upgrade-dir-repos() {
 
   for i in $_found; do
     (
-      printf "=> Upgrading directory %s from origin %s.\n=> git -C %s pull origin master\n" \
+      bname=$(basename $i)
+      exec > >(trap "" INT TERM; sed "s/^/${bname}\t/")
+      exec 2> >(trap "" INT TERM; sed "s/^/${bname}\t(stderr) /" >&2)
+
+      printf "=> Upgrading directory %s from origin %s.\n" \
         $i \
-        "$(git -C $i config remote.origin.url)" \
+        "$(git -C $i config remote.origin.url)"
+
+      printf "=> git -C %s pull origin master\n" \
         $i
 
       git -C $i pull origin master
@@ -144,9 +152,9 @@ function -dot-upgrade-cache-repos() {
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
 
-  echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
+  echo "Upgrading ${__cachedir}, ignoring (${_ignored_plugins})"
 
-  -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
+  -dot-upgrade-dir-repos "${__cachedir}" "${_ignored_plugins[@]}"
 }
 
 
