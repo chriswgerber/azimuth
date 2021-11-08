@@ -845,9 +845,9 @@ function -dot-cache-repos-update() {
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
 
-  echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
+  echo "Upgrading ${__cachedir}, ignoring (${_ignored_plugins})"
 
-  -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
+  -dot-upgrade-dir-repos "${__cachedir}" "${_ignored_plugins[@]}"
 }
 
 
