@@ -50,6 +50,7 @@ function -dot-main() {
   -dot-reload-compinit
 }
 
+
 function -dot-help() {
   # Print all -dot commands
   #
@@ -69,33 +70,137 @@ function -dot-help() {
   fi
 
   for _name in "${cmdArray[@]}"; do
-    echo "${_name}()\n"
-
-    awk \
-      -v fncname="${_name}" \
-      '$0 ~ fncname {
-        getline;
-        while ( $0 ~ /#/ ) {
-          gsub(/#/, "");
-          print "    " $0;
-          getline;
-        }
-      }' \
-      "${_src_file}"
-
-    echo ""
+    -dot-help-print-cmd "${_name}" "${_src_file}"
   done;
 }
 
 
-function -dot-cache-get-file() {
+function -dot-help-print-cmd() {
+  local _fncname="${1}"
+  local _srcfile="${2}"
+
+  if test -z "${_srcfile}"; then
+    _srcfile="$(whence -v - -dot-help-print-cmd | awk '{print $7}')"
+  fi
+
+  echo "${_fncname}()\n"
+  awk -v fncname="${_fncname}" \
+    '$0 ~ fncname {
+      getline;
+      while ( $0 ~ /#/ ) {
+        gsub(/#/, "");
+        print "    " $0;
+        getline;
+      }
+    }' \
+    "${_srcfile}"
+  echo ""
+}
+
+
+function -dot-zprofile-run() {
+  # Run a cprof-like load of the ZSH Environment
+
+  # exposes zprofexport
+  if ! test $(command -v zprof); then
+    echo 'error: Call `zmodload zsh/zprof` to load zsh profiling module.'
+    return
+  fi
+
+  time (zsh -i -c exit)
+  zprof
+}
+
+
+function -dot-brew-bundle-install() {
+  # Installs all of the packages in a Homebrew Brewfile.
+  #
+  # Usage:
+  #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
+
+  local _brewfile=${1:=${BREW_FILE}}
+  local _brew=$(command -v brew)
+
+  test -n ${_brew} ||
+    { echo 'HomeBrew not found; "brew" command not available' && return 1 }
+  test -r ${_brewfile} ||
+    { echo 'Unable to find or read Brewfile.' && return 1 }
+
+  printf 'Installing brew packages from %s\n' "${_brewfile}"
+  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile}
+
+  ${_brew} bundle install --file "${_brewfile}" --verbose
+}
+
+
+function -dot-brew-bundle-dump() {
+  # Dump brew packages to file.
+  #
+  # Usage:
+  #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
+
+  local _brewfile=${1:=${BREW_FILE}}
+  local _brew=$(command -v brew)
+
+  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
+
+  printf 'Installing brew packages from %s\n' "${_brewfile}"
+  printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
+
+  ${_brew} bundle dump --file "${_brewfile}" --force --all
+}
+
+
+function -dot-brew-upgrade() {
+  # Run brew update, upgrade, and cleanup.
+  #
+  # if $BREW_FILE is defined, it will also dump installed packages to $BREW_FILE.
+  #
+  # To enable verbose brew commands, set the end $ZSH_DEBUG.
+
+  local _update_args
+  local _upgrade_args
+  local _dump_args
+  local _cmd
+
+  { # Update brew
+    _update_args="--force"
+    if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
+    _cmd="brew update $_update_args"
+    echo "${_cmd}"
+    eval "${_cmd}"
+  }
+
+  { # Upgrade brews
+    _upgrade_args="--display-times"
+    if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
+    _cmd="brew upgrade $_upgrade_args"
+    echo "${_cmd}"
+    eval "${_cmd}"
+  }
+
+  { # Dump installed brews to file.
+    if [ -n "$BREW_FILE" ]; then
+      -dot-dump-brew-bundle
+    fi
+  }
+
+  { # Cleanup cached brews
+    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
+    echo "${_cmd}"
+    eval "${_cmd}"
+  }
+}
+
+
+function -dot-cache-create-file() {
   # Create or get the name of a file in the cache directory.
   #
   # Usage :
   #   $1 = Name of the file to read from the cache. Will create the file if it
   #        doesn't exist.
 
-  local fh="${DOT_CACHE_DIR}/$1"
+  local fh="${DOT_CACHE_DIR}/${1}"
 
   if ! test -e "${fh}"; then
     mkdir -p "$(dirname ${fh})"
@@ -106,7 +211,7 @@ function -dot-cache-get-file() {
 }
 
 
-function -dot-cache-source-file() {
+function -dot-cache-read-file() {
   # Source a file from the cache.
   #
   # Usage :
@@ -126,15 +231,281 @@ function -dot-cache-update-file() {
   #   $1 = The name of the file to be updated.
   #   $2 = The command to be run to update the file.
 
-  local fh=$(-dot-cache-get-file $1) cmmd="$2"
+  local fh=$(-dot-cache-get-file ${1})
+  local cmmd="${2}"
 
   echo "Updating cached file ${fh}"
 
   (eval "${cmmd}") &>"${fh}"
 }
 
+function -dot-timestamp-get() {
+  echo "$(TZ=America/Chicago /usr/local/bin/gdate '+%FT%T.%3N%:z')"
+}
+
+
+function -dot-deprecated-log-clear() {
+  local logfile="${DOTFILES_DIR}/deprecated.log"
+
+  echo "" > ${logfile}
+
+}
+
+
+function -dot-deprecated-log() {
+  local logfile="${DOTFILES_DIR}/deprecated.log"
+  local _func="${1}"
+  local _msg="${2}"
+
+  (
+    printf \
+      "%s\t%s\t%s\n" \
+      $(-dot-timestamp-get) \
+      "${_func}" \
+      "${_msg}"
+  ) >>${logfile}
+}
+
+
+function -dot-add-fpath() {
+  # Add the directory, and any 1st level directories, to the fpath.
+  #
+  # @DEPRECATED Use -dot-fpath-add
+  #
+  # Usage:
+  #   1 - Directory to begin search. azimuth/functions azimuth/completions
+  #   2 - Name of directory to load within the base directory
+
+  -dot-deprecated-log "-dot-add-fpath" "Used at "${funcstack[@]:1:1}""
+
+  -dot-fpath-add ${1} ${2}
+}
+
+
+function -dot-add-path() {
+  # A stupid function that adds a new Path to the beginning of the PATH.
+  #
+  # @DEPRECATED Use -dot-path-add
+  #
+  # Usage:
+  #   $1 = Path string.
+
+  -dot-deprecated-log "-dot-add-path" "Used at "${funcstack[@]:1:1}""
+
+  -dot-path-add ${1}
+}
+
+
+function -dot-add-symlink-to-home() {
+  # Creates symlink in the $HOME directory
+  #
+  # @DEPRECATED Use -dot-symlink-update
+  #
+  # Usage :
+  #   $1 = Source file to use as link.
+  #   $2 = Destination for symlink.
+
+  -dot-deprecated-log "-dot-add-symlink-to-home" "Used at "${funcstack[@]:1:1}""
+
+  -dot-symlink-update ${1} ${2}
+}
+
+
+function -dot-cache-source-file() {
+  # Source a file from the cache.
+  #
+  # @DEPRECATED Use -dot-cache-read-file
+  #
+  # Usage :
+  #   $1 = File name from cache directory.
+
+  -dot-deprecated-log "-dot-cache-source-file" "Used at "${funcstack[@]:1:1}""
+
+  -dot-cache-read-file $1
+}
+
+
+function -dot-cache-get-file() {
+  # Create or get the name of a file in the cache directory.
+  #
+  # @DEPRECATED Use -dot-cache-create-file
+  #
+  # Usage :
+  #   $1 = Name of the file to read from the cache. Will create the file if it
+  #        doesn't exist.
+
+  -dot-deprecated-log "-dot-cache-get-file" "Used at "${funcstack[@]:1:1}""
+
+  -dot-cache-create-file ${1}
+}
+
+
+function -dot-dump-brew-bundle() {
+  # Dump brew packages to file.
+  #
+  # @DEPRECATED Use -dot-brew-bundle-dump
+  #
+  # Usage:
+  #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
+
+  -dot-deprecated-log "-dot-dump-brew-bundle" "Used at "${funcstack[@]:1:1}""
+
+  -dot-brew-bundle-dump ${1}
+}
+
+
+function -dot-install-brew-bundle() {
+  # Installs all of the packages in a Homebrew Brewfile.
+  #
+  # @DEPRECATED Use -dot-brew-bundle-install
+  #
+  # Usage:
+  #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
+
+  -dot-deprecated-log "-dot-install-brew-bundle" "Used at "${funcstack[@]:1:1}""
+
+  -dot-brew-bundle-install ${1}
+}
+
+
+function -dot-upgrade-brew() {
+  # Run brew update, upgrade, and cleanup.
+  #
+  # @DEPRECATED Use -dot-brew-upgrade
+  #
+  # if $BREW_FILE is defined, it will also dump installed packages to $BREW_FILE.
+  #
+  # To enable verbose brew commands, set the end $ZSH_DEBUG.
+
+  -dot-deprecated-log "-dot-upgrade-brew" "Used at "${funcstack[@]:1:1}""
+
+  -dot-brew-upgrade
+}
+
+
+function -dot-install-github-repo() {
+  # Idempotently clone repo from GitHub into directory.
+  #
+  # @DEPRECATED Use -dot-github-repo-install
+  #
+  # Usage:
+  #   $1 (required) = Namespace/ProjectName
+  #   $2 (required) = Filesystem Location
+  #   $3            = Protocol (SSH|HTTPS)
+
+  -dot-deprecated-log "-dot-install-github-repo" "Used at "${funcstack[@]:1:1}""
+
+  local __test
+  local __url
+  local __repo="${1}"
+  local __dir="${2}"
+  local __protocol="${GIT_PROTOCOL:=ssh}"
+
+  if ! test -d $__dir; then
+    mkdir -p $__dir;
+  fi
+
+  __test=$(git -C $__dir remote -v &>/dev/null)
+
+  if test $? -ne 0 -o ! -d "${__dir}/.git"; then
+    if test "$3"; then __protocol="$3"; fi;
+
+    case $__protocol in
+      https|HTTPS) # Use HTTPS
+        __url="https://github.com/${__repo}.git"
+        ;;
+      ssh|SSH|*)   # Default
+        __url="git@github.com:${__repo}.git"
+        ;;
+    esac;
+
+    rm -r ${__dir} || true;
+
+    git clone --depth 10 $__url $__dir;
+  fi
+}
+
+
+function -dot-install-github-plugin() {
+  # Install Github Plugin
+  #
+  # @DEPRECATED Use -dot-github-plugin-add
+  #
+  # Usage:
+  #   $1 = Group + Plugin Name
+  #   $2 = Install Directory
+
+  -dot-deprecated-log "-dot-install-github-plugin" "Used at "${funcstack[@]:1:1}""
+
+  -dot-github-plugin-add ${1} ${2}
+}
+
+
+function -dot-install-omz() {
+  # Installs OMZ into the ZSH directory
+  #
+  # @DEPRECATED Use -dot-omz-install
+
+  -dot-deprecated-log "-dot-install-omz" "Used at "${funcstack[@]:1:1}""
+
+  -dot-omz-install
+}
+
+
+function -dot-reload-autoload() {
+  # Reload the functions added to fpath.
+  #
+  # @DEPRECATED Use -dot-autoload-reload
+
+  -dot-deprecated-log "-dot-reload-autoload" "Used at "${funcstack[@]:1:1}""
+
+  -dot-autoload-reload
+}
+
+
+function -dot-reload-compinit() {
+  #
+  # @DEPRECATED Use -dot-compinit-reload
+
+  -dot-deprecated-log "-dot-reload-compinit" "Used at "${funcstack[@]:1:1}""
+
+  -dot-compinit-reload
+}
+
 
 function -dot-source-dotfile() {
+  # Source a file in the dotfile dir.
+  #
+  # @DEPRECATED Use -dot-file-source
+  #
+  # If it doesn't find the matching file in the dotfile directory, it will
+  # source it from the current working directory.
+  #
+  # Usage :
+  #   $1 = The name of the file to find in the dotfiles directory.
+
+  -dot-deprecated-log "-dot-source-dotfile" "Used at "${funcstack[@]:1:1}""
+
+  -dot-file-source ${1} ${2}
+}
+
+
+function -dot-source-dirglob() {
+  # Sources all files matching argument, beginning with the root file and then
+  # source all in 1st level subdirectory.
+  #
+  # @DEPRECATED Use -dot-dir-glob-source
+  #
+  # Usage :
+  #   $1 = The name of the file to find across directories.
+
+  -dot-deprecated-log "-dot-source-dirglob" "Used at "${funcstack[@]:1:1}""
+
+  -dot-dir-glob-source $1 ${2}
+}
+
+
+function -dot-file-source() {
   # Source a file in the dotfile dir.
   #
   # If it doesn't find the matching file in the dotfile directory, it will
@@ -151,10 +522,11 @@ function -dot-source-dotfile() {
   elif test -r "${fh}"; then
     source "${fh}";
   fi
+
 }
 
 
-function -dot-source-dirglob() {
+function -dot-dir-glob-source() {
   # Sources all files matching argument, beginning with the root file and then
   # source all in 1st level subdirectory.
   #
@@ -164,15 +536,21 @@ function -dot-source-dirglob() {
   local _target_file=$1
   local base_dir=${2:=$DOTFILES_DIR}
 
-  -dot-source-dotfile "${_target_file}"
+  -dot-file-source "${_target_file}"
+
+  # if command -v fd; then
+  #   fd -pd 2 "${base_dir}/[a-z]*/${_target_file}" "${base_dir}" -exec -dot-file-source
+  #   return
+  # fi
 
   for the_file in $($SHELL +o nomatch -c "ls ${base_dir}/*/${_target_file} 2>/dev/null"); do
-    -dot-source-dotfile $the_file;
+    -dot-file-source $the_file;
   done
+
 }
 
 
-function -dot-add-symlink-to-home() {
+function -dot-symlink-update() {
   # Creates symlink in the $HOME directory
   #
   # Usage :
@@ -207,10 +585,11 @@ function -dot-add-symlink-to-home() {
         "$_dest"
     fi
   fi
+
 }
 
 
-function -dot-add-fpath() {
+function -dot-fpath-add() {
   # Add the directory, and any 1st level directories, to the fpath.
   #
   # Usage:
@@ -235,6 +614,32 @@ function -dot-add-fpath() {
   for fnc in $(find ${fpath_dir} \( -type f -o -type l \) -print0 | tr "\0" " "); do
     autoload -Uz $fnc
   done
+}
+
+
+function -dot-fpath-recompile() {
+  # Recompile ZSH functions and dirs for autoloading.
+  #
+  # Usage:
+  #    $1 = Directory to recompile. Defaults to $DOTFILES_DIR.
+  local _target_dir="${1:=${DOTFILES_DIR}}"
+  local compile_command="autoload -U zrecompile; zrecompile {}"
+
+  set -v
+
+  find "${_target_dir}" -type f -maxdepth 2 \
+    \( -name "config.zsh" -o -name "init.zsh" \) \
+    -exec echo "${compile_command}" \; | zsh -v
+
+  find "${_target_dir}" -type d -maxdepth 2 \
+    \( -name "functions" -o -name "completions" \) \
+    -exec echo "${compile_command}" \; | zsh -v
+
+  find "${_target_dir}/.cache" -type f -depth 1 \
+    -name "*.sh" \
+    -exec echo "${compile_command}" \; | zsh -v
+
+  find "${_target_dir}" -name "*.zwc.old" -delete
 }
 
 
@@ -290,45 +695,6 @@ function -dot-cache-fnc-clear() {
   if [[ "${del_compdump}" == "true" ]] ; then
     rm -f "${ZSH_COMPDUMP}" || true
   fi
-}
-
-
-function -dot-install-brew-bundle() {
-  # Installs all of the packages in a Homebrew Brewfile.
-  #
-  # Usage:
-  #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
-
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
-
-  test -n ${_brew} ||
-    { echo 'HomeBrew not found; "brew" command not available' && return 1 }
-  test -r ${_brewfile} ||
-    { echo 'Unable to find or read Brewfile.' && return 1 }
-
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
-  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile}
-
-  ${_brew} bundle install --file "${_brewfile}" --verbose
-}
-
-
-function -dot-dump-brew-bundle() {
-  # Dump brew packages to file.
-  #
-  # Usage:
-  #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
-
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
-
-  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
-
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
-  printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
-
-  ${_brew} bundle dump --file "${_brewfile}" --force --all
 }
 
 
@@ -392,44 +758,6 @@ function -dot-upgrade-dotfiles-dir() {
 }
 
 
-function -dot-upgrade-brew() {
-  # Run brew update, upgrade, and cleanup
-
-  local _update_args
-  local _upgrade_args
-  local _dump_args
-  local _cmd
-
-  { # Update brew
-    _update_args="--force"
-    if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
-    _cmd="brew update $_update_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
-  }
-
-  { # Upgrade brews
-    _upgrade_args="--display-times"
-    if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
-    _cmd="brew upgrade $_upgrade_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
-  }
-
-  { # Dump installed brews to file.
-    if [ -n "$BREW_FILE" ]; then
-      -dot-dump-brew-bundle
-    fi
-  }
-
-  { # Cleanup cached brews
-    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
-    echo "${_cmd}"
-    eval "${_cmd}"
-  }
-}
-
-
 function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
 
@@ -460,25 +788,9 @@ function -dot-upgrade-dotfiles-projects() {
   done
 
   wait
-}
 
-
-function -dot-upgrade-shell-env() {
-  # Upgrade the Dotfiles environment
-  #
-  # Runs all the upgrade functions against the environment.
-
-  echo "Updating dotfiles dir"
-  -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
-
-  # We have to run the brew upgrade first since everything is installed by it.
-  -dot-upgrade-brew
-  omz update
-  -dot-upgrade-cache-repos
-  -dot-upgrade-dotfiles-projects
-
-  # Lastly, reload the shell
-  exec "${SHELL}"
+  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
+    source "${DOTFILES_DIR}/upgrade.zsh"
 }
 
 
@@ -512,7 +824,40 @@ function -dot-upgrade-completion() {
 }
 
 
-function -dot-install-github-repo() {
+function -dot-path-add() {
+  # A stupid function that adds a new Path to the beginning of the PATH.
+  #
+  # Usage:
+  #   $1 = Path string.
+
+  export PATH="${1}:${PATH}"
+}
+
+
+function -dot-autoload-reload() {
+  # Reload the functions added to fpath.
+
+  for func in $^fpath/*(N-.x:t); do
+    autoload -Uz $func
+  done
+}
+
+
+function -dot-compinit-reload() {
+  # Reload/Setup Autoload functions and compinit
+
+  autoload -U compinit
+  # autoload -Uz +X compdef
+  autoload -U +X bashcompinit
+
+  # Autoload fpath and bash completes compat, as well
+  -dot-autoload-reload
+
+  compinit -C -i -d "${ZSH_COMPDUMP}" && bashcompinit
+}
+
+
+function -dot-github-repo-install() {
   # Idempotently clone repo from GitHub into directory.
   #
   # Usage:
@@ -551,7 +896,7 @@ function -dot-install-github-repo() {
 }
 
 
-function -dot-install-github-plugin() {
+function -dot-github-plugin-add() {
   # Install Github Plugin
   #
   # Usage:
@@ -571,59 +916,10 @@ function -dot-install-github-plugin() {
 }
 
 
-function -dot-install-omz() {
+function -dot-omz-install() {
   # Installs OMZ into the ZSH directory
 
   -dot-install-github-repo \
     "robbyrussell/oh-my-zsh" \
     "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
-}
-
-
-function -dot-add-path() {
-  # A stupid function that adds a new Path to the beginning of the PATH.
-  #
-  # Usage:
-  #   $1 = Path string.
-
-  export PATH="${1}:${PATH}"
-}
-
-
-function -dot-profile-zsh() {
-  # Run a cprof-like load of the ZSH Environment
-
-  # exposes zprofexport
-  if [[ -z "$ZSH_DEBUG" ]]; then
-    echo 'Set $ZSH_DEBUG=1 to enable profiling.'
-  else
-    zmodload zsh/zprof
-    time (zsh -i -c exit)
-    zprof
-  fi
-}
-
-
-function -dot-reload-compinit() {
-  # Reload/Setup Autoload functions and compinit
-
-  autoload -U compinit
-  # autoload -Uz +X compdef
-  autoload -U +X bashcompinit
-
-  # Autoload fpath and bash completes compat, as well
-  -dot-reload-autoload
-
-  compinit -C -i -d "${ZSH_COMPDUMP}" && bashcompinit
-}
-
-
-function -dot-reload-autoload() {
-  # Reload the functions added to fpath.
-
-  local subarray
-
-  for func in $^fpath/*(N-.x:t); do
-    autoload -Uz $func
-  done
 }

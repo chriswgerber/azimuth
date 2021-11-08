@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 
-function -dot-install-github-repo() {
+function -dot-github-repo-install() {
   # Idempotently clone repo from GitHub into directory.
   #
   # Usage:
@@ -40,7 +40,7 @@ function -dot-install-github-repo() {
 }
 
 
-function -dot-install-github-plugin() {
+function -dot-github-plugin-add() {
   # Install Github Plugin
   #
   # Usage:
@@ -60,7 +60,7 @@ function -dot-install-github-plugin() {
 }
 
 
-function -dot-install-omz() {
+function -dot-omz-install() {
   # Installs OMZ into the ZSH directory
 
   -dot-install-github-repo \

@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 
-function -dot-add-fpath() {
+function -dot-fpath-add() {
   # Add the directory, and any 1st level directories, to the fpath.
   #
   # Usage:
@@ -26,6 +26,32 @@ function -dot-add-fpath() {
   for fnc in $(find ${fpath_dir} \( -type f -o -type l \) -print0 | tr "\0" " "); do
     autoload -Uz $fnc
   done
+}
+
+
+function -dot-fpath-recompile() {
+  # Recompile ZSH functions and dirs for autoloading.
+  #
+  # Usage:
+  #    $1 = Directory to recompile. Defaults to $DOTFILES_DIR.
+  local _target_dir="${1:=${DOTFILES_DIR}}"
+  local compile_command="autoload -U zrecompile; zrecompile {}"
+
+  set -v
+
+  find "${_target_dir}" -type f -maxdepth 2 \
+    \( -name "config.zsh" -o -name "init.zsh" \) \
+    -exec echo "${compile_command}" \; | zsh -v
+
+  find "${_target_dir}" -type d -maxdepth 2 \
+    \( -name "functions" -o -name "completions" \) \
+    -exec echo "${compile_command}" \; | zsh -v
+
+  find "${_target_dir}/.cache" -type f -depth 1 \
+    -name "*.sh" \
+    -exec echo "${compile_command}" \; | zsh -v
+
+  find "${_target_dir}" -name "*.zwc.old" -delete
 }
 
 

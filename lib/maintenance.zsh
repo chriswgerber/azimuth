@@ -1,45 +1,6 @@
 #!/bin/zsh
 
 
-function -dot-install-brew-bundle() {
-  # Installs all of the packages in a Homebrew Brewfile.
-  #
-  # Usage:
-  #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
-
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
-
-  test -n ${_brew} ||
-    { echo 'HomeBrew not found; "brew" command not available' && return 1 }
-  test -r ${_brewfile} ||
-    { echo 'Unable to find or read Brewfile.' && return 1 }
-
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
-  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile}
-
-  ${_brew} bundle install --file "${_brewfile}" --verbose
-}
-
-
-function -dot-dump-brew-bundle() {
-  # Dump brew packages to file.
-  #
-  # Usage:
-  #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
-
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
-
-  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
-
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
-  printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
-
-  ${_brew} bundle dump --file "${_brewfile}" --force --all
-}
-
-
 function -dot-upgrade-dir-repos() {
   # Update plugins from Github
   #
@@ -100,44 +61,6 @@ function -dot-upgrade-dotfiles-dir() {
 }
 
 
-function -dot-upgrade-brew() {
-  # Run brew update, upgrade, and cleanup
-
-  local _update_args
-  local _upgrade_args
-  local _dump_args
-  local _cmd
-
-  { # Update brew
-    _update_args="--force"
-    if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
-    _cmd="brew update $_update_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
-  }
-
-  { # Upgrade brews
-    _upgrade_args="--display-times"
-    if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
-    _cmd="brew upgrade $_upgrade_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
-  }
-
-  { # Dump installed brews to file.
-    if [ -n "$BREW_FILE" ]; then
-      -dot-dump-brew-bundle
-    fi
-  }
-
-  { # Cleanup cached brews
-    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
-    echo "${_cmd}"
-    eval "${_cmd}"
-  }
-}
-
-
 function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
 
@@ -168,25 +91,9 @@ function -dot-upgrade-dotfiles-projects() {
   done
 
   wait
-}
 
-
-function -dot-upgrade-shell-env() {
-  # Upgrade the Dotfiles environment
-  #
-  # Runs all the upgrade functions against the environment.
-
-  echo "Updating dotfiles dir"
-  -dot-upgrade-dotfiles-dir ${DOTFILES_DIR}
-
-  # We have to run the brew upgrade first since everything is installed by it.
-  -dot-upgrade-brew
-  omz update
-  -dot-upgrade-cache-repos
-  -dot-upgrade-dotfiles-projects
-
-  # Lastly, reload the shell
-  exec "${SHELL}"
+  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
+    source "${DOTFILES_DIR}/upgrade.zsh"
 }
 
 

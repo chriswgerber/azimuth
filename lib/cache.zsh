@@ -1,14 +1,14 @@
 #!/bin/zsh
 
 
-function -dot-cache-get-file() {
+function -dot-cache-create-file() {
   # Create or get the name of a file in the cache directory.
   #
   # Usage :
   #   $1 = Name of the file to read from the cache. Will create the file if it
   #        doesn't exist.
 
-  local fh="${DOT_CACHE_DIR}/$1"
+  local fh="${DOT_CACHE_DIR}/${1}"
 
   if ! test -e "${fh}"; then
     mkdir -p "$(dirname ${fh})"
@@ -19,7 +19,7 @@ function -dot-cache-get-file() {
 }
 
 
-function -dot-cache-source-file() {
+function -dot-cache-read-file() {
   # Source a file from the cache.
   #
   # Usage :
@@ -39,7 +39,8 @@ function -dot-cache-update-file() {
   #   $1 = The name of the file to be updated.
   #   $2 = The command to be run to update the file.
 
-  local fh=$(-dot-cache-get-file $1) cmmd="$2"
+  local fh=$(-dot-cache-get-file ${1})
+  local cmmd="${2}"
 
   echo "Updating cached file ${fh}"
 

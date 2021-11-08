@@ -39,6 +39,7 @@ function -dot-main() {
   -dot-reload-compinit
 }
 
+
 function -dot-help() {
   # Print all -dot commands
   #
@@ -58,20 +59,43 @@ function -dot-help() {
   fi
 
   for _name in "${cmdArray[@]}"; do
-    echo "${_name}()\n"
-
-    awk \
-      -v fncname="${_name}" \
-      '$0 ~ fncname {
-        getline;
-        while ( $0 ~ /#/ ) {
-          gsub(/#/, "");
-          print "    " $0;
-          getline;
-        }
-      }' \
-      "${_src_file}"
-
-    echo ""
+    -dot-help-print-cmd "${_name}" "${_src_file}"
   done;
+}
+
+
+function -dot-help-print-cmd() {
+  local _fncname="${1}"
+  local _srcfile="${2}"
+
+  if test -z "${_srcfile}"; then
+    _srcfile="$(whence -v - -dot-help-print-cmd | awk '{print $7}')"
+  fi
+
+  echo "${_fncname}()\n"
+  awk -v fncname="${_fncname}" \
+    '$0 ~ fncname {
+      getline;
+      while ( $0 ~ /#/ ) {
+        gsub(/#/, "");
+        print "    " $0;
+        getline;
+      }
+    }' \
+    "${_srcfile}"
+  echo ""
+}
+
+
+function -dot-zprofile-run() {
+  # Run a cprof-like load of the ZSH Environment
+
+  # exposes zprofexport
+  if ! test $(command -v zprof); then
+    echo 'error: Call `zmodload zsh/zprof` to load zsh profiling module.'
+    return
+  fi
+
+  time (zsh -i -c exit)
+  zprof
 }

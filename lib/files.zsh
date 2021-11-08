@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 
-function -dot-source-dotfile() {
+function -dot-file-source() {
   # Source a file in the dotfile dir.
   #
   # If it doesn't find the matching file in the dotfile directory, it will
@@ -18,10 +18,11 @@ function -dot-source-dotfile() {
   elif test -r "${fh}"; then
     source "${fh}";
   fi
+
 }
 
 
-function -dot-source-dirglob() {
+function -dot-dir-glob-source() {
   # Sources all files matching argument, beginning with the root file and then
   # source all in 1st level subdirectory.
   #
@@ -31,15 +32,21 @@ function -dot-source-dirglob() {
   local _target_file=$1
   local base_dir=${2:=$DOTFILES_DIR}
 
-  -dot-source-dotfile "${_target_file}"
+  -dot-file-source "${_target_file}"
+
+  # if command -v fd; then
+  #   fd -pd 2 "${base_dir}/[a-z]*/${_target_file}" "${base_dir}" -exec -dot-file-source
+  #   return
+  # fi
 
   for the_file in $($SHELL +o nomatch -c "ls ${base_dir}/*/${_target_file} 2>/dev/null"); do
-    -dot-source-dotfile $the_file;
+    -dot-file-source $the_file;
   done
+
 }
 
 
-function -dot-add-symlink-to-home() {
+function -dot-symlink-update() {
   # Creates symlink in the $HOME directory
   #
   # Usage :
@@ -74,4 +81,5 @@ function -dot-add-symlink-to-home() {
         "$_dest"
     fi
   fi
+
 }
