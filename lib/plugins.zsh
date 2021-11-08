@@ -60,6 +60,13 @@ function -dot-github-plugin-add() {
 }
 
 
+function -dot-zsh-plugins-upgrade() {
+  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
+
+  -dot-dir-repos-upgrade "${ZSH_CUSTOM}/plugins"
+}
+
+
 function -dot-omz-install() {
   # Installs OMZ into the ZSH directory
 

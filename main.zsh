@@ -267,6 +267,22 @@ function -dot-deprecated-log() {
 }
 
 
+# ==================== #
+# Deprecated Functions #
+# ==================== #
+
+
+function -dot-upgrade-dotfiles-projects() {
+  # Run upgrade.zsh across all directories in dotfiles dir
+  #
+  # @DEPRECATED Use -dot-dir-projects-upgrade
+
+  -dot-deprecated-log "-dot-upgrade-dotfiles-projects" "Used at "${funcstack[@]:1:1}""
+
+  -dot-dir-projects-upgrade
+}
+
+
 function -dot-add-fpath() {
   # Add the directory, and any 1st level directories, to the fpath.
   #
@@ -505,6 +521,78 @@ function -dot-source-dirglob() {
 }
 
 
+function -dot-upgrade-completion() {
+  # Upgrade a completion file.
+  #
+  # @DEPRECATED Use -dot-fpath-completion-update
+  #
+  # Usage :
+  #   1 = Name of the command
+  #   2 = Path of completions directory
+
+  -dot-deprecated-log "-dot-upgrade-completion" "Used at "${funcstack[@]:1:1}""
+
+  -dot-fpath-completion-update $1 $2
+}
+
+
+function -dot-upgrade-zsh-plugins() {
+  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
+  #
+  # @DEPRECATED Use -dot-zsh-plugins-upgrade
+
+  -dot-deprecated-log "-dot-zsh-plugins-upgrade" "Used at "${funcstack[@]:1:1}""
+
+  -dot-zsh-plugins-upgrade
+}
+
+
+function -dot-upgrade-dir-repos() {
+  # Update plugins from Github
+  #
+  # @DEPRECATED Use -dot-dir-repos-upgrade
+  #
+  # Usage:
+  #   $1 = Directory to check for repos.
+  #   $2 = Array of directory names to ignore
+
+  -dot-dir-repos-upgrade $1 $2
+}
+
+
+function -dot-upgrade-cache-repos() {
+  # Update cache directory repositories
+  #
+  # @DEPRECATED Use -dot-cache-repos-update
+
+  -dot-cache-repos-update
+}
+
+
+function -dot-upgrade-dotfiles-dir() {
+  # Update the dotfiles directory, caching the contents while updating.
+  #
+  # @DEPRECATED Do not use.
+  #
+  # Usage :
+  #   $1 = Dotfiles Repo Directory
+
+  -dot-deprecated-log "-dot-upgrade-dotfiles-dir" "Used at "${funcstack[@]:1:1}""
+
+  local repo_dir=${1:=${DOTFILES_DIR}}
+
+  (
+    set -v
+    git -C "${repo_dir}" stash
+    git -C "${repo_dir}" pull --ff-only origin master || true
+  )
+
+  (git -C "${repo_dir}" stash pop || true) &>/dev/null
+
+  -dot-main "${repo_dir}"
+}
+
+
 function -dot-file-source() {
   # Source a file in the dotfile dir.
   #
@@ -547,6 +635,66 @@ function -dot-dir-glob-source() {
     -dot-file-source $the_file;
   done
 
+}
+
+
+function -dot-dir-projects-upgrade() {
+
+
+  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
+    source "${DOTFILES_DIR}/upgrade.zsh"
+
+  for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
+    (
+      set -v
+      source "${i}"
+    ) &
+  done
+
+  wait
+
+  test -f "${DOTFILES_DIR}/post-upgrade.zsh" && \
+    source "${DOTFILES_DIR}/post-upgrade.zsh"
+}
+
+
+function -dot-dir-repos-upgrade() {
+  # Update plugins from Github
+  #
+  # Usage:
+  #   $1 = Directory to check for repos.
+  #   $2 = Array of directory names to ignore
+
+  local _remote_url
+  local _found
+  local _target_dir=$1
+  local _ignore_dirs=(${2})
+
+  if test ${#__ignore_dirs[@]} -eq 0; then
+    _found=($(find "${_target_dir}" -maxdepth 1 -type d \
+      -not -path "${_target_dir}" \
+      -not \( \
+        -name "${_ignore_dirs[1]}" \
+        $(printf -- '-o -name "%s" ' "${_ignore_dirs[2,-1]}") \
+      \)))
+  else
+    _found=($(find "${_target_dir}" -maxdepth 1 -type d \
+      -not -path "${_target_dir}" \
+      ));
+  fi
+
+  for i in $_found; do
+    (
+      printf "=> Upgrading directory %s from origin %s.\n=> git -C %s pull origin master\n" \
+        $i \
+        "$(git -C $i config remote.origin.url)" \
+        $i
+
+      git -C $i pull origin master
+    ) &
+  done
+
+  wait
 }
 
 
@@ -698,67 +846,7 @@ function -dot-cache-fnc-clear() {
 }
 
 
-function -dot-upgrade-dir-repos() {
-  # Update plugins from Github
-  #
-  # Usage:
-  #   $1 = Directory to check for repos.
-  #   $2 = Array of directory names to ignore
-
-  local _remote_url
-  local _found
-  local _target_dir=$1
-  local _ignore_dirs=(${2})
-
-  if test ${#__ignore_dirs[@]} -eq 0; then
-    _found=($(find "${_target_dir}" -maxdepth 1 -type d \
-      -not -path "${_target_dir}" \
-      -not \( \
-        -name "${_ignore_dirs[1]}" \
-        $(printf -- '-o -name "%s" ' "${_ignore_dirs[2,-1]}") \
-      \)))
-  else
-    _found=($(find "${_target_dir}" -maxdepth 1 -type d \
-      -not -path "${_target_dir}" \
-      ));
-  fi
-
-  for i in $_found; do
-    (
-      printf "=> Upgrading directory %s from origin %s.\n=> git -C %s pull origin master\n" \
-        $i \
-        "$(git -C $i config remote.origin.url)" \
-        $i
-
-      git -C $i pull origin master
-    ) &
-  done
-
-  wait
-}
-
-
-function -dot-upgrade-dotfiles-dir() {
-  # Update the dotfiles directory, caching the contents while updating.
-  #
-  # Usage :
-  #   $1 = Dotfiles Repo Directory
-
-  local repo_dir=${1:=${DOTFILES_DIR}}
-
-  (
-    set -v
-    git -C "${repo_dir}" stash
-    git -C "${repo_dir}" pull --ff-only origin master || true
-  )
-
-  (git -C "${repo_dir}" stash pop || true) &>/dev/null
-
-  -dot-main "${repo_dir}"
-}
-
-
-function -dot-upgrade-cache-repos() {
+function -dot-cache-repos-update() {
   # Update cache directory repositories
 
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
@@ -770,31 +858,7 @@ function -dot-upgrade-cache-repos() {
 }
 
 
-function -dot-upgrade-zsh-plugins() {
-  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
-
-  -dot-upgrade-dir-repos "${ZSH_CUSTOM}/plugins"
-}
-
-
-function -dot-upgrade-dotfiles-projects() {
-  # Run upgrade.zsh across all directories in dotfiles dir
-
-  for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
-    (
-      set -v
-      source "${i}"
-    ) &
-  done
-
-  wait
-
-  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
-    source "${DOTFILES_DIR}/upgrade.zsh"
-}
-
-
-function -dot-upgrade-completion() {
+function -dot-fpath-completion-update() {
   # Upgrade a completion file.
   #
   # Usage :
@@ -822,6 +886,7 @@ function -dot-upgrade-completion() {
     set +x
   }
 }
+
 
 
 function -dot-path-add() {
@@ -913,6 +978,13 @@ function -dot-github-plugin-add() {
     "HTTPS";
 
   plugins=($plugins $plugin_name)
+}
+
+
+function -dot-zsh-plugins-upgrade() {
+  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
+
+  -dot-dir-repos-upgrade "${ZSH_CUSTOM}/plugins"
 }
 
 

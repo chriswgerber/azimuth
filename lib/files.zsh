@@ -46,6 +46,66 @@ function -dot-dir-glob-source() {
 }
 
 
+function -dot-dir-projects-upgrade() {
+
+
+  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
+    source "${DOTFILES_DIR}/upgrade.zsh"
+
+  for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
+    (
+      set -v
+      source "${i}"
+    ) &
+  done
+
+  wait
+
+  test -f "${DOTFILES_DIR}/post-upgrade.zsh" && \
+    source "${DOTFILES_DIR}/post-upgrade.zsh"
+}
+
+
+function -dot-dir-repos-upgrade() {
+  # Update plugins from Github
+  #
+  # Usage:
+  #   $1 = Directory to check for repos.
+  #   $2 = Array of directory names to ignore
+
+  local _remote_url
+  local _found
+  local _target_dir=$1
+  local _ignore_dirs=(${2})
+
+  if test ${#__ignore_dirs[@]} -eq 0; then
+    _found=($(find "${_target_dir}" -maxdepth 1 -type d \
+      -not -path "${_target_dir}" \
+      -not \( \
+        -name "${_ignore_dirs[1]}" \
+        $(printf -- '-o -name "%s" ' "${_ignore_dirs[2,-1]}") \
+      \)))
+  else
+    _found=($(find "${_target_dir}" -maxdepth 1 -type d \
+      -not -path "${_target_dir}" \
+      ));
+  fi
+
+  for i in $_found; do
+    (
+      printf "=> Upgrading directory %s from origin %s.\n=> git -C %s pull origin master\n" \
+        $i \
+        "$(git -C $i config remote.origin.url)" \
+        $i
+
+      git -C $i pull origin master
+    ) &
+  done
+
+  wait
+}
+
+
 function -dot-symlink-update() {
   # Creates symlink in the $HOME directory
   #

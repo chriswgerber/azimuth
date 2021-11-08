@@ -108,3 +108,46 @@ function -dot-cache-fnc-clear() {
     rm -f "${ZSH_COMPDUMP}" || true
   fi
 }
+
+
+function -dot-cache-repos-update() {
+  # Update cache directory repositories
+
+  local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
+  local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
+
+  echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
+
+  -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
+}
+
+
+function -dot-fpath-completion-update() {
+  # Upgrade a completion file.
+  #
+  # Usage :
+  #   1 = Name of the command
+  #   2 = Path of completions directory
+
+  local commd="${1}"
+  local arggs=( "${@[2,-2]}" )
+  local dirr="${@[-1]}"
+
+  command -v ${commd} || { printf "command not found: %s. Skipping\n" "${commd}" && return 1 }
+
+  {
+    mkdir -p "${dir}" || true
+
+    printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
+      "${commd}" \
+      "${arggs}" \
+      "${dirr}/"
+
+    set -x
+
+    "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
+
+    set +x
+  }
+}
+

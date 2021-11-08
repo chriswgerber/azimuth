@@ -28,6 +28,22 @@ function -dot-deprecated-log() {
 }
 
 
+# ==================== #
+# Deprecated Functions #
+# ==================== #
+
+
+function -dot-upgrade-dotfiles-projects() {
+  # Run upgrade.zsh across all directories in dotfiles dir
+  #
+  # @DEPRECATED Use -dot-dir-projects-upgrade
+
+  -dot-deprecated-log "-dot-upgrade-dotfiles-projects" "Used at "${funcstack[@]:1:1}""
+
+  -dot-dir-projects-upgrade
+}
+
+
 function -dot-add-fpath() {
   # Add the directory, and any 1st level directories, to the fpath.
   #
@@ -263,4 +279,76 @@ function -dot-source-dirglob() {
   -dot-deprecated-log "-dot-source-dirglob" "Used at "${funcstack[@]:1:1}""
 
   -dot-dir-glob-source $1 ${2}
+}
+
+
+function -dot-upgrade-completion() {
+  # Upgrade a completion file.
+  #
+  # @DEPRECATED Use -dot-fpath-completion-update
+  #
+  # Usage :
+  #   1 = Name of the command
+  #   2 = Path of completions directory
+
+  -dot-deprecated-log "-dot-upgrade-completion" "Used at "${funcstack[@]:1:1}""
+
+  -dot-fpath-completion-update $1 $2
+}
+
+
+function -dot-upgrade-zsh-plugins() {
+  # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
+  #
+  # @DEPRECATED Use -dot-zsh-plugins-upgrade
+
+  -dot-deprecated-log "-dot-zsh-plugins-upgrade" "Used at "${funcstack[@]:1:1}""
+
+  -dot-zsh-plugins-upgrade
+}
+
+
+function -dot-upgrade-dir-repos() {
+  # Update plugins from Github
+  #
+  # @DEPRECATED Use -dot-dir-repos-upgrade
+  #
+  # Usage:
+  #   $1 = Directory to check for repos.
+  #   $2 = Array of directory names to ignore
+
+  -dot-dir-repos-upgrade $1 $2
+}
+
+
+function -dot-upgrade-cache-repos() {
+  # Update cache directory repositories
+  #
+  # @DEPRECATED Use -dot-cache-repos-update
+
+  -dot-cache-repos-update
+}
+
+
+function -dot-upgrade-dotfiles-dir() {
+  # Update the dotfiles directory, caching the contents while updating.
+  #
+  # @DEPRECATED Do not use.
+  #
+  # Usage :
+  #   $1 = Dotfiles Repo Directory
+
+  -dot-deprecated-log "-dot-upgrade-dotfiles-dir" "Used at "${funcstack[@]:1:1}""
+
+  local repo_dir=${1:=${DOTFILES_DIR}}
+
+  (
+    set -v
+    git -C "${repo_dir}" stash
+    git -C "${repo_dir}" pull --ff-only origin master || true
+  )
+
+  (git -C "${repo_dir}" stash pop || true) &>/dev/null
+
+  -dot-main "${repo_dir}"
 }
