@@ -8,22 +8,23 @@ function -dot-timestamp-get() {
 function -dot-deprecated-log-clear() {
   local logfile="${DOTFILES_DIR}/deprecated.log"
 
-  echo "" > ${logfile}
-
+  rm ${logfile} && touch ${logfile}
 }
 
 
 function -dot-deprecated-log() {
   local logfile="${DOTFILES_DIR}/deprecated.log"
-  local _func="${1}"
+  local msg_format='%s %s "%s"'
+  local _fnc="${1}"
   local _msg="${2}"
 
   (
-    printf \
-      "%s\t%s\t%s\n" \
+    printf ${msg_format} \
       $(-dot-timestamp-get) \
-      "${_func}" \
+      "${_fnc}" \
       "${_msg}"
+
+    echo ""
   ) >>${logfile}
 }
 

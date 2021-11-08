@@ -25,7 +25,7 @@ function -dot-cache-read-file() {
   # Usage :
   #   $1 = File name from cache directory.
 
-  local fh=$(-dot-cache-get-file $1)
+  local fh=$(-dot-cache-create-file $1)
 
   test -e "${fh}" && source "${fh}"
 }
@@ -39,7 +39,7 @@ function -dot-cache-update-file() {
   #   $1 = The name of the file to be updated.
   #   $2 = The command to be run to update the file.
 
-  local fh=$(-dot-cache-get-file ${1})
+  local fh=$(-dot-cache-create-file ${1})
   local cmmd="${2}"
 
   echo "Updating cached file ${fh}"

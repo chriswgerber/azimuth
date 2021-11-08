@@ -32,22 +32,22 @@ function -dot-main() {
   # --------------------------------------
   fpath=(${_CUR_DIR}/main.zsh.zwc $fpath)
 
-  -dot-add-fpath "${_CUR_DIR}/functions"
-  -dot-add-fpath "${_CUR_DIR}/completions"
+  -dot-fpath-add "${_CUR_DIR}/functions"
+  -dot-fpath-add "${_CUR_DIR}/completions"
 
   # Config
   # --------------------------------------
-  -dot-source-dirglob "config.zsh"
-  -dot-source-dotfile "post-config.zsh"
+  -dot-dir-glob-source "config.zsh"
+  -dot-file-source "post-config.zsh"
 
   # Init
   # --------------------------------------
-  -dot-source-dirglob "init.zsh"
-  -dot-source-dotfile "post-init.zsh"
+  -dot-dir-glob-source "init.zsh"
+  -dot-file-source "post-init.zsh"
 
   # Finish Autocomplete Setup
   # --------------------------------------
-  -dot-reload-compinit
+  -dot-compinit-reload
 }
 
 
@@ -217,7 +217,7 @@ function -dot-cache-read-file() {
   # Usage :
   #   $1 = File name from cache directory.
 
-  local fh=$(-dot-cache-get-file $1)
+  local fh=$(-dot-cache-create-file $1)
 
   test -e "${fh}" && source "${fh}"
 }
@@ -231,7 +231,7 @@ function -dot-cache-update-file() {
   #   $1 = The name of the file to be updated.
   #   $2 = The command to be run to update the file.
 
-  local fh=$(-dot-cache-get-file ${1})
+  local fh=$(-dot-cache-create-file ${1})
   local cmmd="${2}"
 
   echo "Updating cached file ${fh}"
@@ -247,22 +247,23 @@ function -dot-timestamp-get() {
 function -dot-deprecated-log-clear() {
   local logfile="${DOTFILES_DIR}/deprecated.log"
 
-  echo "" > ${logfile}
-
+  rm ${logfile} && touch ${logfile}
 }
 
 
 function -dot-deprecated-log() {
   local logfile="${DOTFILES_DIR}/deprecated.log"
-  local _func="${1}"
+  local msg_format='%s %s "%s"'
+  local _fnc="${1}"
   local _msg="${2}"
 
   (
-    printf \
-      "%s\t%s\t%s\n" \
+    printf ${msg_format} \
       $(-dot-timestamp-get) \
-      "${_func}" \
+      "${_fnc}" \
       "${_msg}"
+
+    echo ""
   ) >>${logfile}
 }
 
@@ -972,7 +973,7 @@ function -dot-github-plugin-add() {
   local __dir="${2:=${ZSH_CUSTOM}/plugins}"
   local plugin_name="${name#*/}"
 
-  -dot-install-github-repo \
+  -dot-github-repo-install \
     "$name" \
     "${__dir}/${plugin_name}" \
     "HTTPS";
@@ -991,7 +992,7 @@ function -dot-zsh-plugins-upgrade() {
 function -dot-omz-install() {
   # Installs OMZ into the ZSH directory
 
-  -dot-install-github-repo \
+  -dot-github-repo-install \
     "robbyrussell/oh-my-zsh" \
     "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
 }

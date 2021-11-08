@@ -51,7 +51,7 @@ function -dot-github-plugin-add() {
   local __dir="${2:=${ZSH_CUSTOM}/plugins}"
   local plugin_name="${name#*/}"
 
-  -dot-install-github-repo \
+  -dot-github-repo-install \
     "$name" \
     "${__dir}/${plugin_name}" \
     "HTTPS";
@@ -70,7 +70,7 @@ function -dot-zsh-plugins-upgrade() {
 function -dot-omz-install() {
   # Installs OMZ into the ZSH directory
 
-  -dot-install-github-repo \
+  -dot-github-repo-install \
     "robbyrussell/oh-my-zsh" \
     "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
 }

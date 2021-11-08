@@ -21,22 +21,22 @@ function -dot-main() {
   # --------------------------------------
   fpath=(${_CUR_DIR}/main.zsh.zwc $fpath)
 
-  -dot-add-fpath "${_CUR_DIR}/functions"
-  -dot-add-fpath "${_CUR_DIR}/completions"
+  -dot-fpath-add "${_CUR_DIR}/functions"
+  -dot-fpath-add "${_CUR_DIR}/completions"
 
   # Config
   # --------------------------------------
-  -dot-source-dirglob "config.zsh"
-  -dot-source-dotfile "post-config.zsh"
+  -dot-dir-glob-source "config.zsh"
+  -dot-file-source "post-config.zsh"
 
   # Init
   # --------------------------------------
-  -dot-source-dirglob "init.zsh"
-  -dot-source-dotfile "post-init.zsh"
+  -dot-dir-glob-source "init.zsh"
+  -dot-file-source "post-init.zsh"
 
   # Finish Autocomplete Setup
   # --------------------------------------
-  -dot-reload-compinit
+  -dot-compinit-reload
 }
 
 
