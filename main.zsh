@@ -85,7 +85,7 @@ function -dot-help-print-cmd() {
 
   echo "${_fncname}()\n"
   awk -v fncname="${_fncname}" \
-    '$0 ~ fncname {
+    '$2 ~ fncname {
       getline;
       while ( $0 ~ /#/ ) {
         gsub(/#/, "");
@@ -640,22 +640,14 @@ function -dot-dir-glob-source() {
 
 
 function -dot-dir-projects-upgrade() {
+  # Run upgrade.zsh for all projects in ${DOTFILES_DIR}
+  #
+  # Usage ;
+  #     $1: The target directory
 
-
-  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
-    source "${DOTFILES_DIR}/upgrade.zsh"
-
-  for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
-    (
-      set -v
-      source "${i}"
-    ) &
-  done
-
-  wait
-
-  test -f "${DOTFILES_DIR}/post-upgrade.zsh" && \
-    source "${DOTFILES_DIR}/post-upgrade.zsh"
+  -dot-file-source "upgrade.zsh"
+  -dot-dir-glob-source "upgrade.zsh"
+  -dot-file-source "post-upgrade.zsh"
 }
 
 
@@ -777,7 +769,7 @@ function -dot-fpath-recompile() {
   set -v
 
   find "${_target_dir}" -type f -maxdepth 2 \
-    \( -name "config.zsh" -o -name "init.zsh" \) \
+    \( -name "*config.zsh" -o -name "*init.zsh" \) \
     -exec echo "${compile_command}" \; | zsh -v
 
   find "${_target_dir}" -type d -maxdepth 2 \

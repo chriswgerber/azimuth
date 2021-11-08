@@ -47,22 +47,14 @@ function -dot-dir-glob-source() {
 
 
 function -dot-dir-projects-upgrade() {
+  # Run upgrade.zsh for all projects in ${DOTFILES_DIR}
+  #
+  # Usage ;
+  #     $1: The target directory
 
-
-  test -f "${DOTFILES_DIR}/upgrade.zsh" && \
-    source "${DOTFILES_DIR}/upgrade.zsh"
-
-  for i in $(ls -d ${DOTFILES_DIR}/*/upgrade.zsh); do
-    (
-      set -v
-      source "${i}"
-    ) &
-  done
-
-  wait
-
-  test -f "${DOTFILES_DIR}/post-upgrade.zsh" && \
-    source "${DOTFILES_DIR}/post-upgrade.zsh"
+  -dot-file-source "upgrade.zsh"
+  -dot-dir-glob-source "upgrade.zsh"
+  -dot-file-source "post-upgrade.zsh"
 }
 
 

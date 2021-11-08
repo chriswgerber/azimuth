@@ -40,7 +40,7 @@ function -dot-fpath-recompile() {
   set -v
 
   find "${_target_dir}" -type f -maxdepth 2 \
-    \( -name "config.zsh" -o -name "init.zsh" \) \
+    \( -name "*config.zsh" -o -name "*init.zsh" \) \
     -exec echo "${compile_command}" \; | zsh -v
 
   find "${_target_dir}" -type d -maxdepth 2 \

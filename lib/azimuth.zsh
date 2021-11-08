@@ -74,7 +74,7 @@ function -dot-help-print-cmd() {
 
   echo "${_fncname}()\n"
   awk -v fncname="${_fncname}" \
-    '$0 ~ fncname {
+    '$2 ~ fncname {
       getline;
       while ( $0 ~ /#/ ) {
         gsub(/#/, "");
