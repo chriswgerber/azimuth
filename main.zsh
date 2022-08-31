@@ -293,7 +293,7 @@ function -dot-add-fpath() {
   #   1 - Directory to begin search. azimuth/functions azimuth/completions
   #   2 - Name of directory to load within the base directory
 
-  -dot-deprecated-log "-dot-add-fpath" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-add-fpath" "Used at "${funcstack[@]:1:1}". Use -dot-fpath-add."
 
   -dot-fpath-add ${1} ${2}
 }
@@ -307,7 +307,7 @@ function -dot-add-path() {
   # Usage:
   #   $1 = Path string.
 
-  -dot-deprecated-log "-dot-add-path" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-add-path" "Used at "${funcstack[@]:1:1}". Use -dot-path-add instead."
 
   -dot-path-add ${1}
 }
@@ -322,7 +322,7 @@ function -dot-add-symlink-to-home() {
   #   $1 = Source file to use as link.
   #   $2 = Destination for symlink.
 
-  -dot-deprecated-log "-dot-add-symlink-to-home" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-add-symlink-to-home" "Used at "${funcstack[@]:1:1}". Use -dot-symlink-update"
 
   -dot-symlink-update ${1} ${2}
 }
@@ -336,7 +336,7 @@ function -dot-cache-source-file() {
   # Usage :
   #   $1 = File name from cache directory.
 
-  -dot-deprecated-log "-dot-cache-source-file" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-cache-source-file" "Used at "${funcstack[@]:1:1}". Use -dot-cache-read-file"
 
   -dot-cache-read-file $1
 }
@@ -410,7 +410,7 @@ function -dot-install-github-repo() {
   #   $2 (required) = Filesystem Location
   #   $3            = Protocol (SSH|HTTPS)
 
-  -dot-deprecated-log "-dot-install-github-repo" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-install-github-repo" "Used at "${funcstack[@]:1:1}". Use -dot-github-repo-install"
 
   local __test
   local __url
@@ -452,7 +452,7 @@ function -dot-install-github-plugin() {
   #   $1 = Group + Plugin Name
   #   $2 = Install Directory
 
-  -dot-deprecated-log "-dot-install-github-plugin" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-install-github-plugin" "Used at "${funcstack[@]:1:1}". Use -dot-github-plugin-add."
 
   -dot-github-plugin-add ${1} ${2}
 }
@@ -463,7 +463,7 @@ function -dot-install-omz() {
   #
   # @DEPRECATED Use -dot-omz-install
 
-  -dot-deprecated-log "-dot-install-omz" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-install-omz" "Used at "${funcstack[@]:1:1}". Use -dot-omz-install"
 
   -dot-omz-install
 }
@@ -501,7 +501,7 @@ function -dot-source-dotfile() {
   # Usage :
   #   $1 = The name of the file to find in the dotfiles directory.
 
-  -dot-deprecated-log "-dot-source-dotfile" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-source-dotfile" "Used at "${funcstack[@]:1:1}". Use -dot-file-source."
 
   -dot-file-source ${1} ${2}
 }
@@ -533,7 +533,7 @@ function -dot-upgrade-completion() {
 
   -dot-deprecated-log "-dot-upgrade-completion" "Used at "${funcstack[@]:1:1}""
 
-  -dot-fpath-completion-update $1 $2
+  -dot-fpath-completion-update $@
 }
 
 
@@ -703,6 +703,10 @@ function -dot-symlink-update() {
   local _dest_dir
 
   if ! test -L "$_dest"; then
+    printf "\n\nLinking config file\n\tsrc: %s\n\tdest: %s\n\n" \
+      "${_src}" \
+      "${_dest}"
+
     if ! test -e "$_dest"; then
       _dest_dir="$(dirname "$_dest")"
       printf "Creating link for file %s at %s\n" "$_src" "$_dest"
@@ -845,9 +849,9 @@ function -dot-cache-repos-update() {
   local __cachedir="${DOT_CACHE_DIR:=${DOTFILES_DIR}/.cache}"
   local _ignored_plugins=(${DOT_UPGRADE_IGNORE})
 
-  echo "Upgrading ${__cachedir}, ignoring (${_ignored_plugins})"
+  echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
 
-  -dot-upgrade-dir-repos "${__cachedir}" "${_ignored_plugins[@]}"
+  -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
 }
 
 
@@ -859,13 +863,15 @@ function -dot-fpath-completion-update() {
   #   2 = Path of completions directory
 
   local commd="${1}"
-  local arggs=( "${@[2,-2]}" )
-  local dirr="${@[-1]}"
+  local arggs=( ${@[@]:2:2} )
+  local dirr="${@[$#]}"
 
-  command -v ${commd} || { printf "command not found: %s. Skipping\n" "${commd}" && return 1 }
+  if test -z $(command -v "${commd}"); then
+    printf "command not found: %s. Skipping\n" "${commd}";
+    return 1;
+  fi
 
-  {
-    mkdir -p "${dir}" || true
+  (
 
     printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
       "${commd}" \
@@ -874,10 +880,12 @@ function -dot-fpath-completion-update() {
 
     set -x
 
+    mkdir -p "${dirr}" || true
+
     "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
 
     set +x
-  }
+  )
 }
 
 

@@ -130,13 +130,15 @@ function -dot-fpath-completion-update() {
   #   2 = Path of completions directory
 
   local commd="${1}"
-  local arggs=( "${@[2,-2]}" )
-  local dirr="${@[-1]}"
+  local arggs=( ${@[@]:2:2} )
+  local dirr="${@[$#]}"
 
-  command -v ${commd} || { printf "command not found: %s. Skipping\n" "${commd}" && return 1 }
+  if test -z $(command -v "${commd}"); then 
+    printf "command not found: %s. Skipping\n" "${commd}";
+    return 1;
+  fi
 
-  {
-    mkdir -p "${dir}" || true
+  (
 
     printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
       "${commd}" \
@@ -145,9 +147,11 @@ function -dot-fpath-completion-update() {
 
     set -x
 
+    mkdir -p "${dirr}" || true
+
     "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
 
     set +x
-  }
+  )
 }
 

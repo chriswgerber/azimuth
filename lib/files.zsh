@@ -110,6 +110,10 @@ function -dot-symlink-update() {
   local _dest_dir
 
   if ! test -L "$_dest"; then
+    printf "\n\nLinking config file\n\tsrc: %s\n\tdest: %s\n\n" \
+      "${_src}" \
+      "${_dest}"
+    
     if ! test -e "$_dest"; then
       _dest_dir="$(dirname "$_dest")"
       printf "Creating link for file %s at %s\n" "$_src" "$_dest"

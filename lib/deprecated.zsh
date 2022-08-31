@@ -294,7 +294,7 @@ function -dot-upgrade-completion() {
 
   -dot-deprecated-log "-dot-upgrade-completion" "Used at "${funcstack[@]:1:1}""
 
-  -dot-fpath-completion-update $1 $2
+  -dot-fpath-completion-update $@
 }
 
 
