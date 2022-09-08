@@ -47,11 +47,13 @@ function -dot-fpath-recompile() {
     \( -name "functions" -o -name "completions" \) \
     -exec echo "${compile_command}" \; | zsh -v
 
-  find "${_target_dir}/.cache" -type f -depth 1 \
-    -name "*.sh" \
-    -exec echo "${compile_command}" \; | zsh -v
+  if test -d "${_target_dir}/.cache"; then
+    find "${_target_dir}/.cache" -type f -depth 1 \
+      -name "*.sh" \
+      -exec echo "${compile_command}" \; | zsh -v
+  fi
 
-  find "${_target_dir}" -name "*.zwc.old" -delete
+  find "${_target_dir}" -name "*.zwc.old" -print -delete
 }
 
 
