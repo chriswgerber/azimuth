@@ -99,3 +99,22 @@ function -dot-zprofile-run() {
   time (zsh -i -c exit)
   zprof
 }
+
+
+function -dot-azimuth-update() {
+  # Upgrade brew, zsh, plugins, and dotfiles.
+  #
+  # Runs (in order):
+  #   -dot-brew-upgrade
+  #
+  #
+  -dot-brew-upgrade
+
+  -dot-zsh-plugins-upgrade
+
+  -dot-dir-projects-upgrade
+
+  -dot-cache-repos-update
+
+  -dot-fpath-recompile
+}

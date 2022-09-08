@@ -31,9 +31,10 @@ function -dot-brew-bundle-dump() {
   local _brewfile=${1:=${BREW_FILE}}
   local _brew=$(command -v brew)
 
+  printf 'Dumping brew packages to %s\n' "${_brewfile}"
+
   test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
 
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
   printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
 
   ${_brew} bundle dump --file "${_brewfile}" --force --all

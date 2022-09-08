@@ -66,17 +66,21 @@ function -dot-cache-fnc-dir() {
   local suffix=".zwc"
   local zwc
 
+  # Not a directory, exiting
   if ! test -d ${target_dir}; then
     return
   fi
 
   zwc="${target_dir}${suffix}"
 
+  # If there are no files or links in the directory, print and exit
   if [[ "$(find ${target_dir} \( -type f -o -type l \) -print0)" == "" ]]; then
     printf "%s" ${target_dir}
     return
   fi
 
+  # if it's a directory, and there are files and links, and the ZWC file doesn't exist,
+  # compile it.
   if ! test -f ${zwc}; then
     rm -f ${zwc}
     touch ${zwc}
@@ -118,7 +122,7 @@ function -dot-cache-repos-update() {
 
   echo "Upgrading ${__cachedir}, ignoring ${_ignored_plugins}"
 
-  -dot-upgrade-dir-repos "${__cachedir}" ${_ignored_plugins}
+  -dot-dir-repos-upgrade "${__cachedir}" ${_ignored_plugins}
 }
 
 
@@ -133,13 +137,12 @@ function -dot-fpath-completion-update() {
   local arggs=( ${@[@]:2:2} )
   local dirr="${@[$#]}"
 
-  if test -z $(command -v "${commd}"); then 
+  if test -z $(command -v "${commd}"); then
     printf "command not found: %s. Skipping\n" "${commd}";
     return 1;
   fi
 
   (
-
     printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
       "${commd}" \
       "${arggs}" \

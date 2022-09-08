@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+
 function -dot-timestamp-get() {
   echo "$(TZ=America/Chicago /usr/local/bin/gdate '+%FT%T.%3N%:z')"
 }
@@ -13,15 +14,22 @@ function -dot-deprecated-log-clear() {
 
 
 function -dot-deprecated-log() {
+  # Log use of deprecated function.
+  #
+  # Args:
+  #   1: Correct function to use
+  #   2: Message to print
   local logfile="${DOTFILES_DIR}/deprecated.log"
-  local msg_format='%s %s "%s"'
-  local _fnc="${1}"
+  local msg_format='[%s] %s\t->\t%s "%s"'
+  local _bad_func="${funcstack[@]:1:1}"
+  local _good_fnc="${1}"
   local _msg="${2}"
 
   (
-    printf ${msg_format} \
+    printf "${msg_format}" \
       $(-dot-timestamp-get) \
-      "${_fnc}" \
+      "${_bad_fnc}" \
+      "${_good_fnc}" \
       "${_msg}"
 
     echo ""
@@ -39,9 +47,9 @@ function -dot-upgrade-dotfiles-projects() {
   #
   # @DEPRECATED Use -dot-dir-projects-upgrade
 
-  -dot-deprecated-log "-dot-upgrade-dotfiles-projects" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-dir-projects-upgrade" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-dir-projects-upgrade
+  -dot-dir-projects-upgrade $@
 }
 
 
@@ -54,9 +62,9 @@ function -dot-add-fpath() {
   #   1 - Directory to begin search. azimuth/functions azimuth/completions
   #   2 - Name of directory to load within the base directory
 
-  -dot-deprecated-log "-dot-add-fpath" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-fpath-add" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-fpath-add ${1} ${2}
+  -dot-fpath-add $@
 }
 
 
@@ -68,9 +76,9 @@ function -dot-add-path() {
   # Usage:
   #   $1 = Path string.
 
-  -dot-deprecated-log "-dot-add-path" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-path-add" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-path-add ${1}
+  -dot-path-add $@
 }
 
 
@@ -83,9 +91,9 @@ function -dot-add-symlink-to-home() {
   #   $1 = Source file to use as link.
   #   $2 = Destination for symlink.
 
-  -dot-deprecated-log "-dot-add-symlink-to-home" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-symlink-update" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-symlink-update ${1} ${2}
+  -dot-symlink-update $@
 }
 
 
@@ -97,9 +105,9 @@ function -dot-cache-source-file() {
   # Usage :
   #   $1 = File name from cache directory.
 
-  -dot-deprecated-log "-dot-cache-source-file" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-cache-read-file" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-cache-read-file $1
+  -dot-cache-read-file $@
 }
 
 
@@ -112,9 +120,9 @@ function -dot-cache-get-file() {
   #   $1 = Name of the file to read from the cache. Will create the file if it
   #        doesn't exist.
 
-  -dot-deprecated-log "-dot-cache-get-file" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-cache-create-file" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-cache-create-file ${1}
+  -dot-cache-create-file $@
 }
 
 
@@ -126,9 +134,9 @@ function -dot-dump-brew-bundle() {
   # Usage:
   #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
 
-  -dot-deprecated-log "-dot-dump-brew-bundle" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-brew-bundle-dump" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-brew-bundle-dump ${1}
+  -dot-brew-bundle-dump $@
 }
 
 
@@ -140,9 +148,9 @@ function -dot-install-brew-bundle() {
   # Usage:
   #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
 
-  -dot-deprecated-log "-dot-install-brew-bundle" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-brew-bundle-install" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-brew-bundle-install ${1}
+  -dot-brew-bundle-install $@
 }
 
 
@@ -155,9 +163,9 @@ function -dot-upgrade-brew() {
   #
   # To enable verbose brew commands, set the end $ZSH_DEBUG.
 
-  -dot-deprecated-log "-dot-upgrade-brew" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-brew-upgrade" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-brew-upgrade
+  -dot-brew-upgrade $@
 }
 
 
@@ -171,36 +179,9 @@ function -dot-install-github-repo() {
   #   $2 (required) = Filesystem Location
   #   $3            = Protocol (SSH|HTTPS)
 
-  -dot-deprecated-log "-dot-install-github-repo" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-github-repo-install" "Used at \"${funcstack[@]:1:1}\""
 
-  local __test
-  local __url
-  local __repo="${1}"
-  local __dir="${2}"
-  local __protocol="${GIT_PROTOCOL:=ssh}"
-
-  if ! test -d $__dir; then
-    mkdir -p $__dir;
-  fi
-
-  __test=$(git -C $__dir remote -v &>/dev/null)
-
-  if test $? -ne 0 -o ! -d "${__dir}/.git"; then
-    if test "$3"; then __protocol="$3"; fi;
-
-    case $__protocol in
-      https|HTTPS) # Use HTTPS
-        __url="https://github.com/${__repo}.git"
-        ;;
-      ssh|SSH|*)   # Default
-        __url="git@github.com:${__repo}.git"
-        ;;
-    esac;
-
-    rm -r ${__dir} || true;
-
-    git clone --depth 10 $__url $__dir;
-  fi
+  -dot-github-repo-install $@
 }
 
 
@@ -213,9 +194,9 @@ function -dot-install-github-plugin() {
   #   $1 = Group + Plugin Name
   #   $2 = Install Directory
 
-  -dot-deprecated-log "-dot-install-github-plugin" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-github-plugin-add" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-github-plugin-add ${1} ${2}
+  -dot-github-plugin-add $@
 }
 
 
@@ -224,9 +205,9 @@ function -dot-install-omz() {
   #
   # @DEPRECATED Use -dot-omz-install
 
-  -dot-deprecated-log "-dot-install-omz" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-omz-install" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-omz-install
+  -dot-omz-install $@
 }
 
 
@@ -235,9 +216,9 @@ function -dot-reload-autoload() {
   #
   # @DEPRECATED Use -dot-autoload-reload
 
-  -dot-deprecated-log "-dot-reload-autoload" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-autoload-reload" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-autoload-reload
+  -dot-autoload-reload $@
 }
 
 
@@ -245,9 +226,9 @@ function -dot-reload-compinit() {
   #
   # @DEPRECATED Use -dot-compinit-reload
 
-  -dot-deprecated-log "-dot-reload-compinit" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-compinit-reload" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-compinit-reload
+  -dot-compinit-reload $@
 }
 
 
@@ -262,9 +243,9 @@ function -dot-source-dotfile() {
   # Usage :
   #   $1 = The name of the file to find in the dotfiles directory.
 
-  -dot-deprecated-log "-dot-source-dotfile" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-file-source" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-file-source ${1} ${2}
+  -dot-file-source $@
 }
 
 
@@ -277,9 +258,9 @@ function -dot-source-dirglob() {
   # Usage :
   #   $1 = The name of the file to find across directories.
 
-  -dot-deprecated-log "-dot-source-dirglob" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-dir-glob-source" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-dir-glob-source $1 ${2}
+  -dot-dir-glob-source $@
 }
 
 
@@ -292,7 +273,7 @@ function -dot-upgrade-completion() {
   #   1 = Name of the command
   #   2 = Path of completions directory
 
-  -dot-deprecated-log "-dot-upgrade-completion" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-fpath-completion-update" "Used at \"${funcstack[@]:1:1}\""
 
   -dot-fpath-completion-update $@
 }
@@ -303,9 +284,9 @@ function -dot-upgrade-zsh-plugins() {
   #
   # @DEPRECATED Use -dot-zsh-plugins-upgrade
 
-  -dot-deprecated-log "-dot-zsh-plugins-upgrade" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "-dot-zsh-plugins-upgrade" "Used at \"${funcstack[@]:1:1}\""
 
-  -dot-zsh-plugins-upgrade
+  -dot-zsh-plugins-upgrade $@
 }
 
 
@@ -318,7 +299,9 @@ function -dot-upgrade-dir-repos() {
   #   $1 = Directory to check for repos.
   #   $2 = Array of directory names to ignore
 
-  -dot-dir-repos-upgrade $1 $2
+  -dot-deprecated-log "-dot-dir-repos-upgrade" "Used at \"${funcstack[@]:1:1}\""
+
+  -dot-dir-repos-upgrade $@
 }
 
 
@@ -327,7 +310,9 @@ function -dot-upgrade-cache-repos() {
   #
   # @DEPRECATED Use -dot-cache-repos-update
 
-  -dot-cache-repos-update
+  -dot-deprecated-log "-dot-cache-repos-update" "Used at \"${funcstack[@]:1:1}\""
+
+  -dot-cache-repos-update $@
 }
 
 
@@ -339,7 +324,7 @@ function -dot-upgrade-dotfiles-dir() {
   # Usage :
   #   $1 = Dotfiles Repo Directory
 
-  -dot-deprecated-log "-dot-upgrade-dotfiles-dir" "Used at "${funcstack[@]:1:1}""
+  -dot-deprecated-log "NONE" "Used at \"${funcstack[@]:1:1}\""
 
   local repo_dir=${1:=${DOTFILES_DIR}}
 
