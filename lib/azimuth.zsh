@@ -45,12 +45,14 @@ function -dot-help() {
   #
   # Usage:
   #   1 (optional) = Command to print help for
-
+  local _ignore_deprecations="@DEPRECATED"
   local _cmd="${1}"
   local _cmds="$(compgen -c | sort | grep -E '^\-dot')"
   local _src_file="$(whence -v - -dot-help | awk '{print $7}')"
+  local _out
 
   if test -n "${_cmd}"; then
+    _ignore_deprecations=""
     echo ''
     cmdArray=( "${_cmd}" )
   else
@@ -59,7 +61,13 @@ function -dot-help() {
   fi
 
   for _name in "${cmdArray[@]}"; do
-    -dot-help-print-cmd "${_name}" "${_src_file}"
+    _out=$(-dot-help-print-cmd "${_name}" "${_src_file}")
+
+    case "${_out}" in
+      *${_ignore_deprecations}*) printf "" ;;
+      *)             echo "${_out}\n" ;;
+    esac
+
   done;
 }
 
@@ -74,7 +82,7 @@ function -dot-help-print-cmd() {
 
   echo "${_fncname}()\n"
   awk -v fncname="${_fncname}" \
-    '$2 ~ fncname {
+    '$0 ~ "function " fncname {
       getline;
       while ( $0 ~ /#/ ) {
         gsub(/#/, "");
@@ -106,15 +114,24 @@ function -dot-azimuth-update() {
   #
   # Runs (in order):
   #   -dot-brew-upgrade
-  #
-  #
+  #   -dot-zsh-plugins-upgrade
+  #   -dot-dir-projects-upgrade
+  #   -dot-cache-repos-update
+  #   -dot-fpath-recompile
+  local _msgfmt="+==\n+== Exec: %s\n+==\n"
+
+  printf "${_msgfmt}" "-dot-brew-upgrade"
   -dot-brew-upgrade
 
+  printf "${_msgfmt}" "-dot-zsh-plugins-upgrade"
   -dot-zsh-plugins-upgrade
 
+  printf "${_msgfmt}" "-dot-dir-projects-upgrade"
   -dot-dir-projects-upgrade
 
+  printf "${_msgfmt}" "-dot-cache-repos-update"
   -dot-cache-repos-update
 
+  printf "${_msgfmt}" "-dot-fpath-recompile"
   -dot-fpath-recompile
 }

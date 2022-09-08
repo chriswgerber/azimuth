@@ -56,12 +56,14 @@ function -dot-help() {
   #
   # Usage:
   #   1 (optional) = Command to print help for
-
+  local _ignore_deprecations="@DEPRECATED"
   local _cmd="${1}"
   local _cmds="$(compgen -c | sort | grep -E '^\-dot')"
   local _src_file="$(whence -v - -dot-help | awk '{print $7}')"
+  local _out
 
   if test -n "${_cmd}"; then
+    _ignore_deprecations=""
     echo ''
     cmdArray=( "${_cmd}" )
   else
@@ -70,7 +72,13 @@ function -dot-help() {
   fi
 
   for _name in "${cmdArray[@]}"; do
-    -dot-help-print-cmd "${_name}" "${_src_file}"
+    _out=$(-dot-help-print-cmd "${_name}" "${_src_file}")
+
+    case "${_out}" in
+      *${_ignore_deprecations}*) printf "" ;;
+      *)             echo "${_out}\n" ;;
+    esac
+
   done;
 }
 
@@ -85,7 +93,7 @@ function -dot-help-print-cmd() {
 
   echo "${_fncname}()\n"
   awk -v fncname="${_fncname}" \
-    '$2 ~ fncname {
+    '$0 ~ "function " fncname {
       getline;
       while ( $0 ~ /#/ ) {
         gsub(/#/, "");
@@ -117,16 +125,25 @@ function -dot-azimuth-update() {
   #
   # Runs (in order):
   #   -dot-brew-upgrade
-  #
-  #
+  #   -dot-zsh-plugins-upgrade
+  #   -dot-dir-projects-upgrade
+  #   -dot-cache-repos-update
+  #   -dot-fpath-recompile
+  local _msgfmt="+==\n+== Exec: %s\n+==\n"
+
+  printf "${_msgfmt}" "-dot-brew-upgrade"
   -dot-brew-upgrade
 
+  printf "${_msgfmt}" "-dot-zsh-plugins-upgrade"
   -dot-zsh-plugins-upgrade
 
+  printf "${_msgfmt}" "-dot-dir-projects-upgrade"
   -dot-dir-projects-upgrade
 
+  printf "${_msgfmt}" "-dot-cache-repos-update"
   -dot-cache-repos-update
 
+  printf "${_msgfmt}" "-dot-fpath-recompile"
   -dot-fpath-recompile
 }
 
@@ -272,27 +289,25 @@ function -dot-deprecated-log-clear() {
 }
 
 
+function -dot-log-message() {
+  local msg_format='[ %s ]\t%s'
+  local stamp="$(-dot-timestamp-get)"
+  local _msg="${1}"
+
+  printf "${msg_format}" ${stamp} "${_msg}"
+}
+
+
 function -dot-deprecated-log() {
   # Log use of deprecated function.
   #
   # Args:
-  #   1: Correct function to use
-  #   2: Message to print
+  #   1: Message to print
+
   local logfile="${DOTFILES_DIR}/deprecated.log"
-  local msg_format='[%s] %s\t->\t%s "%s"'
-  local _bad_func="${funcstack[@]:1:1}"
-  local _good_fnc="${1}"
-  local _msg="${2}"
+  local msg="${1}"
 
-  (
-    printf "${msg_format}" \
-      $(-dot-timestamp-get) \
-      "${_bad_fnc}" \
-      "${_good_fnc}" \
-      "${_msg}"
-
-    echo ""
-  ) >>${logfile}
+  ( echo "$(-dot-log-message "${msg}")" ) >>${logfile}
 }
 
 
@@ -305,8 +320,11 @@ function -dot-upgrade-dotfiles-projects() {
   # Run upgrade.zsh across all directories in dotfiles dir
   #
   # @DEPRECATED Use -dot-dir-projects-upgrade
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-dir-projects-upgrade"
 
-  -dot-deprecated-log "-dot-dir-projects-upgrade" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
   -dot-dir-projects-upgrade $@
 }
@@ -320,8 +338,11 @@ function -dot-add-fpath() {
   # Usage:
   #   1 - Directory to begin search. azimuth/functions azimuth/completions
   #   2 - Name of directory to load within the base directory
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-fpath-add"
 
-  -dot-deprecated-log "-dot-fpath-add" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
   -dot-fpath-add $@
 }
@@ -334,10 +355,13 @@ function -dot-add-path() {
   #
   # Usage:
   #   $1 = Path string.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-fpath-add"
 
-  -dot-deprecated-log "-dot-path-add" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-path-add $@
+  ${new_fnc} $@
 }
 
 
@@ -349,10 +373,13 @@ function -dot-add-symlink-to-home() {
   # Usage :
   #   $1 = Source file to use as link.
   #   $2 = Destination for symlink.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-symlink-update"
 
-  -dot-deprecated-log "-dot-symlink-update" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-symlink-update $@
+  ${new_fnc} $@
 }
 
 
@@ -363,10 +390,13 @@ function -dot-cache-source-file() {
   #
   # Usage :
   #   $1 = File name from cache directory.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-cache-read-file"
 
-  -dot-deprecated-log "-dot-cache-read-file" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-cache-read-file $@
+  ${new_fnc} $@
 }
 
 
@@ -378,10 +408,13 @@ function -dot-cache-get-file() {
   # Usage :
   #   $1 = Name of the file to read from the cache. Will create the file if it
   #        doesn't exist.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-cache-create-file"
 
-  -dot-deprecated-log "-dot-cache-create-file" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-cache-create-file $@
+  ${new_fnc} $@
 }
 
 
@@ -392,10 +425,13 @@ function -dot-dump-brew-bundle() {
   #
   # Usage:
   #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-brew-bundle-dump"
 
-  -dot-deprecated-log "-dot-brew-bundle-dump" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-brew-bundle-dump $@
+  ${new_fnc} $@
 }
 
 
@@ -406,10 +442,13 @@ function -dot-install-brew-bundle() {
   #
   # Usage:
   #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-brew-bundle-install"
 
-  -dot-deprecated-log "-dot-brew-bundle-install" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-brew-bundle-install $@
+  ${new_fnc} $@
 }
 
 
@@ -421,10 +460,13 @@ function -dot-upgrade-brew() {
   # if $BREW_FILE is defined, it will also dump installed packages to $BREW_FILE.
   #
   # To enable verbose brew commands, set the end $ZSH_DEBUG.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-brew-upgrade"
 
-  -dot-deprecated-log "-dot-brew-upgrade" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-brew-upgrade $@
+  ${new_fnc} $@
 }
 
 
@@ -437,10 +479,13 @@ function -dot-install-github-repo() {
   #   $1 (required) = Namespace/ProjectName
   #   $2 (required) = Filesystem Location
   #   $3            = Protocol (SSH|HTTPS)
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-github-repo-install"
 
-  -dot-deprecated-log "-dot-github-repo-install" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-github-repo-install $@
+  ${new_fnc} $@
 }
 
 
@@ -452,10 +497,13 @@ function -dot-install-github-plugin() {
   # Usage:
   #   $1 = Group + Plugin Name
   #   $2 = Install Directory
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-github-plugin-add"
 
-  -dot-deprecated-log "-dot-github-plugin-add" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-github-plugin-add $@
+  ${new_fnc} $@
 }
 
 
@@ -463,10 +511,13 @@ function -dot-install-omz() {
   # Installs OMZ into the ZSH directory
   #
   # @DEPRECATED Use -dot-omz-install
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-omz-install"
 
-  -dot-deprecated-log "-dot-omz-install" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-omz-install $@
+  ${new_fnc} $@
 }
 
 
@@ -474,20 +525,26 @@ function -dot-reload-autoload() {
   # Reload the functions added to fpath.
   #
   # @DEPRECATED Use -dot-autoload-reload
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-autoload-reload"
 
-  -dot-deprecated-log "-dot-autoload-reload" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-autoload-reload $@
+  ${new_fnc} $@
 }
 
 
 function -dot-reload-compinit() {
   #
   # @DEPRECATED Use -dot-compinit-reload
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-compinit-reload"
 
-  -dot-deprecated-log "-dot-compinit-reload" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-compinit-reload $@
+  ${new_fnc} $@
 }
 
 
@@ -501,10 +558,13 @@ function -dot-source-dotfile() {
   #
   # Usage :
   #   $1 = The name of the file to find in the dotfiles directory.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-file-source"
 
-  -dot-deprecated-log "-dot-file-source" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-file-source $@
+  ${new_fnc} $@
 }
 
 
@@ -516,10 +576,13 @@ function -dot-source-dirglob() {
   #
   # Usage :
   #   $1 = The name of the file to find across directories.
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-dir-glob-source"
 
-  -dot-deprecated-log "-dot-dir-glob-source" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-dir-glob-source $@
+  ${new_fnc} $@
 }
 
 
@@ -531,10 +594,13 @@ function -dot-upgrade-completion() {
   # Usage :
   #   1 = Name of the command
   #   2 = Path of completions directory
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-fpath-completion-update"
 
-  -dot-deprecated-log "-dot-fpath-completion-update" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-fpath-completion-update $@
+  ${new_fnc} $@
 }
 
 
@@ -542,10 +608,13 @@ function -dot-upgrade-zsh-plugins() {
   # Update plugins for ZSH in "${ZSH_CUSTOM}/plugins"
   #
   # @DEPRECATED Use -dot-zsh-plugins-upgrade
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-zsh-plugins-upgrade"
 
-  -dot-deprecated-log "-dot-zsh-plugins-upgrade" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-zsh-plugins-upgrade $@
+  ${new_fnc} $@
 }
 
 
@@ -557,10 +626,13 @@ function -dot-upgrade-dir-repos() {
   # Usage:
   #   $1 = Directory to check for repos.
   #   $2 = Array of directory names to ignore
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-dir-repos-upgrade"
 
-  -dot-deprecated-log "-dot-dir-repos-upgrade" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-dir-repos-upgrade $@
+  ${new_fnc} $@
 }
 
 
@@ -568,10 +640,13 @@ function -dot-upgrade-cache-repos() {
   # Update cache directory repositories
   #
   # @DEPRECATED Use -dot-cache-repos-update
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="-dot-cache-repos-update"
 
-  -dot-deprecated-log "-dot-cache-repos-update" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Update %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  -dot-cache-repos-update $@
+  ${new_fnc} $@
 }
 
 
@@ -582,20 +657,23 @@ function -dot-upgrade-dotfiles-dir() {
   #
   # Usage :
   #   $1 = Dotfiles Repo Directory
+  local bad_file=${funcstack[@]:1:1}
+  local bad_fnc="${0}"
+  local new_fnc="NONE"
 
-  -dot-deprecated-log "NONE" "Used at \"${funcstack[@]:1:1}\""
+  -dot-deprecated-log "$(printf "Delete %s:%s\t->\t%s" "${bad_file}" "${bad_fnc}" "${new_fnc}")"
 
-  local repo_dir=${1:=${DOTFILES_DIR}}
+  # local repo_dir=${1:=${DOTFILES_DIR}}
 
-  (
-    set -v
-    git -C "${repo_dir}" stash
-    git -C "${repo_dir}" pull --ff-only origin master || true
-  )
+  # (
+  #   set -v
+  #   git -C "${repo_dir}" stash
+  #   git -C "${repo_dir}" pull --ff-only origin master || true
+  # )
 
-  (git -C "${repo_dir}" stash pop || true) &>/dev/null
+  # (git -C "${repo_dir}" stash pop || true) &>/dev/null
 
-  -dot-main "${repo_dir}"
+  # -dot-main "${repo_dir}"
 }
 
 
