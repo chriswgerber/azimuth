@@ -71,7 +71,7 @@ function -dot-brew-upgrade() {
 
   { # Dump installed brews to file.
     if [ -n "$BREW_FILE" ]; then
-      -dot-dump-brew-bundle
+      -dot-brew-bundle-dump
     fi
   }
 
