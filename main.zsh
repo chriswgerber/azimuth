@@ -239,11 +239,10 @@ function -dot-cache-create-file() {
 
   local fh="${DOT_CACHE_DIR}/${1}"
 
-  if ! test -e "${fh}"; then
-    mkdir -p "$(dirname ${fh})"
-    touch "${fh}"
-  fi
+  if test -e "${fh}"; then echo "${fh}"; return; fi
 
+  mkdir -p "$(dirname ${fh})"
+  touch "${fh}"
   echo "${fh}"
 }
 
@@ -256,7 +255,7 @@ function -dot-cache-read-file() {
 
   local fh=$(-dot-cache-create-file $1)
 
-  test -e "${fh}" && source "${fh}"
+  source "${fh}"
 }
 
 
