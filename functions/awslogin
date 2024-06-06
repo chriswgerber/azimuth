@@ -1,5 +1,10 @@
 #!/bin/zsh
-# AWS Login
+# AWSLogin using Azure Credentials
+#
+# Usage:
+#   1 - Name of AWS config profile. [AWS_PROFILE]
+#   2 - Azure AD Username
+
 local _aws_profile _azure_user _azure_url
 
 _azure_url="https://myapps.microsoftonline.com/"

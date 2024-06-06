@@ -1,4 +1,14 @@
 #!/bin/zsh
+# Pull value from MacOS Keychain
+#
+# All args are optional, but require "" to avoid moving them positionally if an argument
+# is blank.
+#
+# Usage:
+#   1 - Service Name. Usually URL.
+#   2 - Account name. Usually username.
+#   3 - Comment. Additional filtering description.
+#   4 - Label
 
 # Args/Flag
 local sec_find_cmd _sec

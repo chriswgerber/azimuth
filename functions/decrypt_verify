@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
+# Decrypt file using GPG
+#
+# Usage:
+#   1 - Path to source file.
 
-# Decrypt file and verify signature
 local SRC_FILE DST_FILE
 
 if [ -z $1 ]; then

@@ -84,6 +84,12 @@ function -dot-help() {
 
 
 function -dot-help-print-cmd() {
+  # Print help info about a command.
+  #
+  # Args:
+  #   1: Name of the command.
+  #   2: (optional) File to source command from.
+
   local _fncname="${1}"
   local _srcfile="${2}"
 
@@ -277,11 +283,15 @@ function -dot-cache-update-file() {
 
 
 function -dot-timestamp-get() {
+  # Get current timestamp for logging
+
   echo "$(TZ=America/Chicago /usr/local/bin/gdate '+%FT%T.%3N%:z')"
 }
 
 
 function -dot-deprecated-log-clear() {
+  # Clear deprecated.log from dotfiles dir.
+
   local logfile="${DOTFILES_DIR}/deprecated.log"
 
   rm ${logfile} && touch ${logfile}
@@ -289,6 +299,11 @@ function -dot-deprecated-log-clear() {
 
 
 function -dot-log-message() {
+  # Print log message with timestamp.
+  #
+  # Args:
+  #   1: Message to log
+
   local msg_format='[ %s ]\t%s'
   local stamp="$(-dot-timestamp-get)"
   local _msg="${1}"

@@ -73,6 +73,12 @@ function -dot-help() {
 
 
 function -dot-help-print-cmd() {
+  # Print help info about a command.
+  #
+  # Args:
+  #   1: Name of the command.
+  #   2: (optional) File to source command from.
+
   local _fncname="${1}"
   local _srcfile="${2}"
 

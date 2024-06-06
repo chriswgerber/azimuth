@@ -1,4 +1,9 @@
 #!/usr/bin/env zsh
+# Copy a file and permissions to destination
+#
+# Usage:
+#   1 - Source file
+#   2 - Destination to copy file.
 
 local src=$1
 local dst=$2

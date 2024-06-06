@@ -2,11 +2,15 @@
 
 
 function -dot-timestamp-get() {
+  # Get current timestamp for logging
+
   echo "$(TZ=America/Chicago /usr/local/bin/gdate '+%FT%T.%3N%:z')"
 }
 
 
 function -dot-deprecated-log-clear() {
+  # Clear deprecated.log from dotfiles dir.
+
   local logfile="${DOTFILES_DIR}/deprecated.log"
 
   rm ${logfile} && touch ${logfile}
@@ -14,6 +18,11 @@ function -dot-deprecated-log-clear() {
 
 
 function -dot-log-message() {
+  # Print log message with timestamp.
+  #
+  # Args:
+  #   1: Message to log
+
   local msg_format='[ %s ]\t%s'
   local stamp="$(-dot-timestamp-get)"
   local _msg="${1}"

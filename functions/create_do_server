@@ -2,10 +2,11 @@
 ###################################
 # Create Digital Ocean Server
 #
-# $1 = Name of Server (Required)
-# $2 = Region Slug    (Default "nyc2")
-# $3 = Image Slug     (Default "ubuntu-14-04-x64")
-# $4 = Image Size     (Default "1gb")
+# Usage:
+#   1 - Name of Server (Required)
+#   2 - Region Slug    (Default "nyc2")
+#   3 - Image Slug     (Default "ubuntu-14-04-x64")
+#   4 - Image Size     (Default "1gb")
 
 local NAME REGION IMAGE SIZE SSH_KEY_ID
 

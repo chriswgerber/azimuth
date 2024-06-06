@@ -1,8 +1,9 @@
 #!/usr/bin/env zsh
-##########################
-# Make AWS STS Credentials
-# $1 = aws profile
-# $2 = Role ARN (todo)
+# Create temporary credentials for AWS using STS.
+#
+# Usage:
+#   1 - Name of AWS config profile. [AWS_PROFILE]
+#   2 - Role ARN to create credentials for
 
 _atc_profile() {
   local prf
@@ -22,7 +23,7 @@ _atc_main() {
 
   _TEMP_CRED_PROFILE="$(_atc_profile $1 | tr -d '[[:space:]]')"
   if [[ "$_TEMP_CRED_PROFILE" == "" ]]; then
-    echo "\x1b[0;4;33m\n-----> Must define a profile. Either use awstempcreds <profile> or set AWS_PROFILE. \x1b[0m\n"
+    echo "\x1b[0;4;33m\n-----> Must define a profile. Either use aws_temp_creds <profile> or set AWS_PROFILE. \x1b[0m\n"
     return 1
   fi
 

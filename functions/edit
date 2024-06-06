@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
-
-##########################
 # Opens using code
-# $1 = File/Directory to Open
-# $2 = Run in Dev mode
+#
+# Usage:
+#   1 - File/Directory to Open
+#   2 - Run in Dev mode
 (
   EDITOR=$(command -v code)
   PATH=$HOMEBREW_REPOSITORY/bin:$PATH
