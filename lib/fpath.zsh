@@ -15,6 +15,7 @@ function -dot-fpath-add() {
   if ! test -d ${fpath_dir}; then
     return
   fi
+
   if test "${skipZwc}" != "not"; then
     fncPath="${fpath_dir}"
   else
@@ -64,16 +65,14 @@ function -dot-cache-fnc-dir() {
   #   $1 = Target Directory
   #   $2 = Optional file name of the compiled functions.
 
-  local target_dir="${1}"
-  local suffix=".zwc"
-  local zwc
+  local target_dir="${1}";
+  local suffix=".zwc";
+  local zwc="${target_dir}${suffix}";
 
   # Not a directory, exiting
   if ! test -d ${target_dir}; then
     return
   fi
-
-  zwc="${target_dir}${suffix}"
 
   # If there are no files or links in the directory, print and exit
   if [[ "$(find ${target_dir} \( -type f -o -type l \) -print0)" == "" ]]; then
@@ -88,7 +87,8 @@ function -dot-cache-fnc-dir() {
     touch ${zwc}
     (
       set -v
-      zcompile -Uz ${zwc} $(find ${target_dir} \( -type f -o -type l \) -print0 | tr "\0" " ")
+      file_list=$(find ${target_dir} \( -type f -o -type l \) -print0 | tr "\0" " ");
+      zcompile -Uz ${zwc} ${file_list};
     )
   fi
 

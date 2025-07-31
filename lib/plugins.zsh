@@ -74,3 +74,24 @@ function -dot-omz-install() {
     "robbyrussell/oh-my-zsh" \
     "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
 }
+
+
+function -dot-omz-load-plugin() {
+  # Loads OMZ plugin file and any completions.
+  local _plgn_name="${1}";
+  local _plgn_dir="${ZSH}/plugins/${_plgn_name}";
+  local _custom_plgn_dir="${ZSH_CUSTOM}/plugins/${_plgn_name}";
+  local _plgn_filename="${_plgn_name}.plugin.zsh";
+  local _plgn_file;
+
+  # Load plugin files
+  if test -d "${_custom_plgn_dir}"; then
+    local _plgn_file="${_custom_plgn_dir}/${_plgn_filename}";
+  else if test -d "${_plgn_dir}"; then
+    local _plgn_file="${_plgn_dir}/${_plgn_filename}";
+  fi
+  source "${_plgn_file}";
+
+  # Load autoload files.
+
+}
