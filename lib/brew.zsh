@@ -7,18 +7,18 @@ function -dot-brew-bundle-install() {
   # Usage:
   #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
 
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}};
+  local _brew=$(command -v brew);
 
   test -n ${_brew} ||
-    { echo 'HomeBrew not found; "brew" command not available' && return 1 }
+    { echo 'HomeBrew not found; "brew" command not available' && return 1 };
   test -r ${_brewfile} ||
-    { echo 'Unable to find or read Brewfile.' && return 1 }
+    { echo 'Unable to find or read Brewfile.' && return 1 };
 
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
-  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile}
+  printf 'Installing brew packages from %s\n' "${_brewfile}";
+  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile};
 
-  ${_brew} bundle install --file "${_brewfile}" --verbose
+  ${_brew} bundle install --file "${_brewfile}" --verbose;
 }
 
 
@@ -28,16 +28,16 @@ function -dot-brew-bundle-dump() {
   # Usage:
   #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
 
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}};
+  local _brew=$(command -v brew);
 
-  printf 'Dumping brew packages to %s\n' "${_brewfile}"
+  printf 'Dumping brew packages to %s\n' "${_brewfile}";
 
-  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
+  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1};
 
-  printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
+  printf 'Executing: %s bundle dump --file "%s" --force\n' ${_brew} ${_brewfile};
 
-  ${_brew} bundle dump --file "${_brewfile}" --force --all
+  ${_brew} bundle dump --file "${_brewfile}" --force;
 }
 
 
@@ -48,36 +48,36 @@ function -dot-brew-upgrade() {
   #
   # To enable verbose brew commands, set the end $ZSH_DEBUG.
 
-  local _update_args
-  local _upgrade_args
-  local _dump_args
-  local _cmd
+  local _update_args;
+  local _upgrade_args;
+  local _dump_args;
+  local _cmd;
 
   { # Update brew
-    _update_args="--force"
+    _update_args="--force";
     if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
-    _cmd="brew update $_update_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
+    _cmd="brew update $_update_args";
+    echo "${_cmd}";
+    eval "${_cmd}";
   }
 
   { # Upgrade brews
-    _upgrade_args="--display-times"
+    _upgrade_args="--display-times";
     if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
-    _cmd="brew upgrade $_upgrade_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
+    _cmd="brew upgrade $_upgrade_args";
+    echo "${_cmd}";
+    eval "${_cmd}";
   }
 
   { # Dump installed brews to file.
     if [ -n "$BREW_FILE" ]; then
-      -dot-brew-bundle-dump
+      -dot-brew-bundle-dump;
     fi
   }
 
   { # Cleanup cached brews
-    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
-    echo "${_cmd}"
-    eval "${_cmd}"
+    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}";
+    echo "${_cmd}";
+    eval "${_cmd}";
   }
 }

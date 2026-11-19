@@ -3,8 +3,13 @@
 
 function -dot-timestamp-get() {
   # Get current timestamp for logging
+  local _gdate="/usr/local/bin/gdate";
 
-  echo "$(TZ=America/Chicago /usr/local/bin/gdate '+%FT%T.%3N%:z')"
+  if test -x "/opt/homebrew/bin/gdate"; then
+    _gdate="/opt/homebrew/bin/gdate";
+  fi;
+
+  echo "$(TZ=America/Chicago "${_gdate}" '+%FT%T.%3N%:z')"
 }
 
 

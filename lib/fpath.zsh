@@ -133,29 +133,48 @@ function -dot-fpath-completion-update() {
   #
   # Usage :
   #   1 = Name of the command
-  #   2 = Path of completions directory
+  #   2+ = Additional args to pass
+  #   Last = Path of completions directory
 
-  local commd="${1}"
-  local arggs=( ${@[@]:2:2} )
-  local dirr="${@[$#]}"
+  local commd="${1}";
+  local dirr="${@[$#]}";
+  local dir_out;
+  local arggs;
 
   if test -z $(command -v "${commd}"); then
-    printf "command not found: %s. Skipping\n" "${commd}";
+    printf "command not found: %s. Skipping\n" "${commd}" 1>&2;
     return 1;
   fi
 
-  (
+  if test -d "${dirr}"; then
+    dir_out=0;
+    arggs=( ${@[@]:2:-1} );
+
     printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
       "${commd}" \
       "${arggs}" \
-      "${dirr}/"
+      "${dirr}/" 1>&2;
+  else
+    dir_out=1;
+    arggs=( ${@[@]:2} );
 
+    printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n' \
+      "${commd}" \
+      "${arggs}" 1>&2;
+  fi
+
+  (
     set -x
-
-    mkdir -p "${dirr}" || true
-
-    "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
-
+    if [[ "${dir_out}" -eq 0 ]]; then
+      {
+        mkdir -p "${dirr}" || true 1>&2;
+        "${commd}" ${arggs[@]} &> "${dirr}/_${commd}";
+      }
+    else
+      {
+        "${commd}" ${arggs[@]}
+      }
+    fi
     set +x
   )
 }

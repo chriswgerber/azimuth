@@ -160,18 +160,18 @@ function -dot-brew-bundle-install() {
   # Usage:
   #   $1 = Brewfile to use. Defaults to env `BREW_FILE`
 
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}};
+  local _brew=$(command -v brew);
 
   test -n ${_brew} ||
-    { echo 'HomeBrew not found; "brew" command not available' && return 1 }
+    { echo 'HomeBrew not found; "brew" command not available' && return 1 };
   test -r ${_brewfile} ||
-    { echo 'Unable to find or read Brewfile.' && return 1 }
+    { echo 'Unable to find or read Brewfile.' && return 1 };
 
-  printf 'Installing brew packages from %s\n' "${_brewfile}"
-  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile}
+  printf 'Installing brew packages from %s\n' "${_brewfile}";
+  printf 'Executing: %s bundle install --file "%s" --verbose\n' ${_brew} ${_brewfile};
 
-  ${_brew} bundle install --file "${_brewfile}" --verbose
+  ${_brew} bundle install --file "${_brewfile}" --verbose;
 }
 
 
@@ -181,16 +181,16 @@ function -dot-brew-bundle-dump() {
   # Usage:
   #   $1 = Brewfile to write. Defaults to env `BREW_FILE`
 
-  local _brewfile=${1:=${BREW_FILE}}
-  local _brew=$(command -v brew)
+  local _brewfile=${1:=${BREW_FILE}};
+  local _brew=$(command -v brew);
 
-  printf 'Dumping brew packages to %s\n' "${_brewfile}"
+  printf 'Dumping brew packages to %s\n' "${_brewfile}";
 
-  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1}
+  test -n ${_brew} || {echo 'HomeBrew not found; "brew" command not available' && return 1};
 
-  printf 'Executing: %s bundle dump --file "%s" --force --all\n' ${_brew} ${_brewfile}
+  printf 'Executing: %s bundle dump --file "%s" --force\n' ${_brew} ${_brewfile};
 
-  ${_brew} bundle dump --file "${_brewfile}" --force --all
+  ${_brew} bundle dump --file "${_brewfile}" --force;
 }
 
 
@@ -201,37 +201,37 @@ function -dot-brew-upgrade() {
   #
   # To enable verbose brew commands, set the end $ZSH_DEBUG.
 
-  local _update_args
-  local _upgrade_args
-  local _dump_args
-  local _cmd
+  local _update_args;
+  local _upgrade_args;
+  local _dump_args;
+  local _cmd;
 
   { # Update brew
-    _update_args="--force"
+    _update_args="--force";
     if [[ -n "$ZSH_DEBUG" ]]; then _update_args="--verbose ${_update_args}"; fi
-    _cmd="brew update $_update_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
+    _cmd="brew update $_update_args";
+    echo "${_cmd}";
+    eval "${_cmd}";
   }
 
   { # Upgrade brews
-    _upgrade_args="--display-times"
+    _upgrade_args="--display-times";
     if [[ -n "$ZSH_DEBUG" ]]; then _upgrade_args="--verbose ${_upgrade_args}"; fi
-    _cmd="brew upgrade $_upgrade_args"
-    echo "${_cmd}"
-    eval "${_cmd}"
+    _cmd="brew upgrade $_upgrade_args";
+    echo "${_cmd}";
+    eval "${_cmd}";
   }
 
   { # Dump installed brews to file.
     if [ -n "$BREW_FILE" ]; then
-      -dot-brew-bundle-dump
+      -dot-brew-bundle-dump;
     fi
   }
 
   { # Cleanup cached brews
-    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}"
-    echo "${_cmd}"
-    eval "${_cmd}"
+    _cmd="brew cleanup --verbose --prune=${BREW_CLEANUP_PRUNE_DAYS}";
+    echo "${_cmd}";
+    eval "${_cmd}";
   }
 }
 
@@ -284,8 +284,13 @@ function -dot-cache-update-file() {
 
 function -dot-timestamp-get() {
   # Get current timestamp for logging
+  local _gdate="/usr/local/bin/gdate";
 
-  echo "$(TZ=America/Chicago /usr/local/bin/gdate '+%FT%T.%3N%:z')"
+  if test -x "/opt/homebrew/bin/gdate"; then
+    _gdate="/opt/homebrew/bin/gdate";
+  fi;
+
+  echo "$(TZ=America/Chicago "${_gdate}" '+%FT%T.%3N%:z')"
 }
 
 
@@ -847,6 +852,7 @@ function -dot-fpath-add() {
   if ! test -d ${fpath_dir}; then
     return
   fi
+
   if test "${skipZwc}" != "not"; then
     fncPath="${fpath_dir}"
   else
@@ -896,16 +902,14 @@ function -dot-cache-fnc-dir() {
   #   $1 = Target Directory
   #   $2 = Optional file name of the compiled functions.
 
-  local target_dir="${1}"
-  local suffix=".zwc"
-  local zwc
+  local target_dir="${1}";
+  local suffix=".zwc";
+  local zwc="${target_dir}${suffix}";
 
   # Not a directory, exiting
   if ! test -d ${target_dir}; then
     return
   fi
-
-  zwc="${target_dir}${suffix}"
 
   # If there are no files or links in the directory, print and exit
   if [[ "$(find ${target_dir} \( -type f -o -type l \) -print0)" == "" ]]; then
@@ -920,7 +924,8 @@ function -dot-cache-fnc-dir() {
     touch ${zwc}
     (
       set -v
-      zcompile -Uz ${zwc} $(find ${target_dir} \( -type f -o -type l \) -print0 | tr "\0" " ")
+      file_list=$(find ${target_dir} \( -type f -o -type l \) -print0 | tr "\0" " ");
+      zcompile -Uz ${zwc} ${file_list};
     )
   fi
 
@@ -965,29 +970,48 @@ function -dot-fpath-completion-update() {
   #
   # Usage :
   #   1 = Name of the command
-  #   2 = Path of completions directory
+  #   2+ = Additional args to pass
+  #   Last = Path of completions directory
 
-  local commd="${1}"
-  local arggs=( ${@[@]:2:2} )
-  local dirr="${@[$#]}"
+  local commd="${1}";
+  local dirr="${@[$#]}";
+  local dir_out;
+  local arggs;
 
   if test -z $(command -v "${commd}"); then
-    printf "command not found: %s. Skipping\n" "${commd}";
+    printf "command not found: %s. Skipping\n" "${commd}" 1>&2;
     return 1;
   fi
 
-  (
+  if test -d "${dirr}"; then
+    dir_out=0;
+    arggs=( ${@[@]:2:-1} );
+
     printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n\tDirectory:\t%s\n' \
       "${commd}" \
       "${arggs}" \
-      "${dirr}/"
+      "${dirr}/" 1>&2;
+  else
+    dir_out=1;
+    arggs=( ${@[@]:2} );
 
+    printf 'Upgrading completion\n\tCommand:\t%s\n\tArguments:\t%s\n' \
+      "${commd}" \
+      "${arggs}" 1>&2;
+  fi
+
+  (
     set -x
-
-    mkdir -p "${dirr}" || true
-
-    "${commd}" ${arggs[@]} &> "${dirr}/_${commd}"
-
+    if [[ "${dir_out}" -eq 0 ]]; then
+      {
+        mkdir -p "${dirr}" || true 1>&2;
+        "${commd}" ${arggs[@]} &> "${dirr}/_${commd}";
+      }
+    else
+      {
+        "${commd}" ${arggs[@]}
+      }
+    fi
     set +x
   )
 }
@@ -1099,4 +1123,45 @@ function -dot-omz-install() {
   -dot-github-repo-install \
     "robbyrussell/oh-my-zsh" \
     "${ZSH:=${ZSH_CACHE_DIR}/oh-my-zsh}"
+}
+
+
+# function -dot-omz-load-plugin() {
+#   # Loads OMZ plugin file and any completions.
+#   local _plgn_name="${1}";
+#   local _plgn_dir="${ZSH}/plugins/${_plgn_name}";
+#   local _custom_plgn_dir="${ZSH_CUSTOM}/plugins/${_plgn_name}";
+#   local _plgn_filename="${_plgn_name}.plugin.zsh";
+#   local _plgn_file;
+
+#   # Load plugin files
+#   if test -d "${_custom_plgn_dir}"; then
+#     local _plgn_file="${_custom_plgn_dir}/${_plgn_filename}";
+#   else if test -d "${_plgn_dir}"; then
+#     local _plgn_file="${_plgn_dir}/${_plgn_filename}";
+#   fi
+#   source "${_plgn_file}";
+
+#   # Load autoload files.
+# }
+
+
+function -dot-omz-load-plugin() {
+  # Loads OMZ plugin file and any completions.
+  local _plgn_name="${1}";
+  local _plgn_dir="${ZSH}/plugins/${_plgn_name}";
+  local _custom_plgn_dir="${ZSH_CUSTOM}/plugins/${_plgn_name}";
+  local _plgn_filename="${_plgn_name}.plugin.zsh";
+  local _plgn_file;
+
+  # Load plugin files
+  if test -d "${_custom_plgn_dir}"; then
+    local _plgn_file="${_custom_plgn_dir}/${_plgn_filename}";
+
+  elif test -d "${_plgn_dir}"; then
+    local _plgn_file="${_plgn_dir}/${_plgn_filename}";
+
+  fi
+
+  source "${_plgn_file}";
 }
